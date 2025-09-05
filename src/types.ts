@@ -9,7 +9,8 @@ export type Recipe = {
   updatedAt: string
 }
 
-export type ExtraItem = { name: IngredientName; section: 'standard' | 'special' }
+export type ExtraSource = 'favourite' | 'manual'
+export type ExtraItem = { name: IngredientName; section: 'standard' | 'special'; source?: ExtraSource }
 
 export type SavedList = {
   id: string

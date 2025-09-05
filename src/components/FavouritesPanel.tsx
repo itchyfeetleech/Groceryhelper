@@ -3,7 +3,7 @@ import { useStore } from '../state/store'
 import { normalizeName } from '../utils/normalization'
 
 export function FavouritesPanel() {
-  const { favourites, extras, addFavourite, removeFavourite, addExtra } = useStore()
+  const { favourites, extras, addFavourite, removeFavourite, addExtra, removeExtra } = useStore()
   const [favName, setFavName] = useState('')
 
   const extrasSet = useMemo(() => {
@@ -19,7 +19,7 @@ export function FavouritesPanel() {
     setFavName('')
   }
 
-  const list = useMemo(() => favourites.filter((f) => f.section === 'special'), [favourites])
+  const list = useMemo(() => favourites.filter((f) => f.section === 'standard'), [favourites])
 
   const renderList = () => {
     if (list.length === 0) return <p className="text-sm text-slate-500">None</p>
@@ -27,7 +27,7 @@ export function FavouritesPanel() {
       <ul className="divide-y border rounded bg-white max-h-60 overflow-auto">
         {list.map((f, i) => {
           const norm = normalizeName(f.name)
-          const key = `special:${norm}`
+          const key = `standard:${norm}`
           const alreadyAdded = extrasSet.has(key)
           return (
             <li key={key + ':' + i} className="p-2 flex items-center justify-between gap-2">
@@ -35,17 +35,21 @@ export function FavouritesPanel() {
                 <span>{f.name}</span>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  className={`px-2 py-1 rounded border ${alreadyAdded ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  onClick={() => addExtra({ name: f.name, section: 'special' })}
-                  disabled={alreadyAdded}
-                  aria-label={`Add favourite ${f.name}`}
-                >
-                  {alreadyAdded ? 'Added' : 'Add'}
-                </button>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={alreadyAdded}
+                    onChange={() => {
+                      if (alreadyAdded) removeExtra(norm, 'standard')
+                      else addExtra({ name: f.name, section: 'standard', source: 'favourite' })
+                    }}
+                    aria-label={`Include favourite ${f.name} this week`}
+                  />
+                  <span className="text-xs">This week</span>
+                </label>
                 <button
                   className="px-2 py-1 rounded border border-red-300 text-red-700"
-                  onClick={() => removeFavourite(norm, 'special')}
+                  onClick={() => removeFavourite(norm, 'standard')}
                   aria-label={`Remove favourite ${f.name}`}
                 >
                   Remove
@@ -72,7 +76,7 @@ export function FavouritesPanel() {
             }
           }}
           className="flex-1 border rounded px-3 py-2"
-          placeholder="Add favourite item (always special)"
+          placeholder="Add favourite item (always standard)"
           aria-label="Favourite item name"
         />
         <button className="px-3 py-2 rounded bg-emerald-600 text-white" onClick={addFav}>Add Favourite</button>

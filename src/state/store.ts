@@ -46,7 +46,7 @@ const persisted: StorageSchema = loadStorage()
 export const useStore = create<StoreState>((set, get) => ({
   recipes: persisted.recipes,
   savedLists: persisted.savedLists,
-  favourites: (persisted.favourites ?? []).map((f) => ({ name: f.name, section: 'special' as const })),
+  favourites: (persisted.favourites ?? []).map((f) => ({ name: f.name, section: 'standard' as const })),
   selectedRecipeIds: [],
   extras: [],
   checkedNames: [],
@@ -84,10 +84,11 @@ export const useStore = create<StoreState>((set, get) => ({
   addExtra: (item) => {
     const norm = normalizeName(item.name)
     if (!norm) return
-    const section: 'standard' | 'special' = 'special'
+    const section: 'standard' | 'special' = 'standard'
     const exists = get().extras.some((e) => normalizeName(e.name) === norm && e.section === section)
     if (exists) return
-    set((s) => ({ extras: [...s.extras, { name: item.name.trim(), section }] }))
+    const source = item.source ?? 'manual'
+    set((s) => ({ extras: [...s.extras, { name: item.name.trim(), section, source }] }))
   },
   removeExtra: (normName, section) => {
     set((s) => ({
@@ -106,7 +107,7 @@ export const useStore = create<StoreState>((set, get) => ({
   addFavourite: (item) => {
     const norm = normalizeName(item.name)
     if (!norm) return
-    const section: 'standard' | 'special' = 'special'
+    const section: 'standard' | 'special' = 'standard'
     const exists = get().favourites.some((e) => normalizeName(e.name) === norm && e.section === section)
     if (exists) return
     set((s) => ({ favourites: [...s.favourites, { name: item.name.trim(), section }] }))
@@ -175,7 +176,7 @@ export const useStore = create<StoreState>((set, get) => ({
     set({
       recipes: parsed.recipes ?? [],
       savedLists: parsed.savedLists ?? [],
-      favourites: (parsed.favourites ?? []).map((f: ExtraItem) => ({ name: f.name, section: 'special' as const })),
+      favourites: (parsed.favourites ?? []).map((f: ExtraItem) => ({ name: f.name, section: 'standard' as const })),
       selectedRecipeIds: [],
       extras: [],
       checkedNames: [],
