@@ -6,7 +6,7 @@ import { normalizeName } from '../utils/normalization'
 import { RecipeEditor } from './RecipeEditor'
 
 export function RecipeList() {
-  const { recipes, addRecipe, updateRecipe, deleteRecipe } = useStore()
+  const { recipes, addRecipe, updateRecipe, deleteRecipe, selectedRecipeIds, setSelectedRecipeIds } = useStore()
   const [q, setQ] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -51,7 +51,22 @@ export function RecipeList() {
                     {r.standard.length} standard • {r.special.length} special
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  <label className="inline-flex items-center gap-2 mr-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedRecipeIds.includes(r.id)}
+                      onChange={() => {
+                        if (selectedRecipeIds.includes(r.id)) {
+                          setSelectedRecipeIds(selectedRecipeIds.filter((x) => x !== r.id))
+                        } else {
+                          setSelectedRecipeIds([...selectedRecipeIds, r.id])
+                        }
+                      }}
+                      aria-label={`Select recipe ${r.title} for this week`}
+                    />
+                    <span className="text-xs">This week</span>
+                  </label>
                   <button className="px-2 py-1 rounded border" onClick={() => setEditingId(r.id)}>Edit</button>
                   <button
                     className="px-2 py-1 rounded border border-red-300 text-red-700"

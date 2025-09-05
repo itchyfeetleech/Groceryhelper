@@ -6,6 +6,7 @@ import { App } from './App'
 import { RecipesPage } from './routes/RecipesPage'
 import { GroceriesPage } from './routes/GroceriesPage'
 import { SettingsPage } from './routes/SettingsPage'
+import { ItemsPage } from './routes/ItemsPage'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -14,6 +15,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<App />}> 
           <Route index element={<Navigate to="/recipes" replace />} />
           <Route path="recipes" element={<RecipesPage />} />
+          <Route path="items" element={<ItemsPage />} />
           <Route path="groceries" element={<GroceriesPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>

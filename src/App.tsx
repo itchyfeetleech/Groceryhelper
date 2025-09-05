@@ -11,6 +11,7 @@ export function App() {
           <NavTabs
             tabs={[
               { to: '/recipes', label: 'Recipes' },
+              { to: '/items', label: 'Items' },
               { to: '/groceries', label: 'Groceries' },
               { to: '/settings', label: 'Settings' }
             ]}
@@ -24,4 +25,3 @@ export function App() {
     </div>
   )
 }
-

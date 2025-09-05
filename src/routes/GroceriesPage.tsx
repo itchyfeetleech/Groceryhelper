@@ -1,4 +1,3 @@
-import { GroceryBuilder } from '../components/GroceryBuilder'
 import { GroceryListView } from '../components/GroceryListView'
 import { SavedListManager } from '../components/SavedListManager'
 import { useStore } from '../state/store'
@@ -8,7 +7,6 @@ export function GroceriesPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold">Groceries</h1>
-      <GroceryBuilder />
       <GroceryListView />
       <SavedListManager />
       {selectedRecipeIds.length === 0 && (
@@ -17,4 +15,3 @@ export function GroceriesPage() {
     </div>
   )
 }
-

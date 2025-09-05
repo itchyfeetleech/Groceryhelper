@@ -46,7 +46,7 @@ const persisted: StorageSchema = loadStorage()
 export const useStore = create<StoreState>((set, get) => ({
   recipes: persisted.recipes,
   savedLists: persisted.savedLists,
-  favourites: persisted.favourites ?? [],
+  favourites: (persisted.favourites ?? []).map((f) => ({ name: f.name, section: 'special' as const })),
   selectedRecipeIds: [],
   extras: [],
   checkedNames: [],
@@ -84,9 +84,10 @@ export const useStore = create<StoreState>((set, get) => ({
   addExtra: (item) => {
     const norm = normalizeName(item.name)
     if (!norm) return
-    const exists = get().extras.some((e) => normalizeName(e.name) === norm && e.section === item.section)
+    const section: 'standard' | 'special' = 'special'
+    const exists = get().extras.some((e) => normalizeName(e.name) === norm && e.section === section)
     if (exists) return
-    set((s) => ({ extras: [...s.extras, { name: item.name.trim(), section: item.section }] }))
+    set((s) => ({ extras: [...s.extras, { name: item.name.trim(), section }] }))
   },
   removeExtra: (normName, section) => {
     set((s) => ({
@@ -105,9 +106,10 @@ export const useStore = create<StoreState>((set, get) => ({
   addFavourite: (item) => {
     const norm = normalizeName(item.name)
     if (!norm) return
-    const exists = get().favourites.some((e) => normalizeName(e.name) === norm && e.section === item.section)
+    const section: 'standard' | 'special' = 'special'
+    const exists = get().favourites.some((e) => normalizeName(e.name) === norm && e.section === section)
     if (exists) return
-    set((s) => ({ favourites: [...s.favourites, { name: item.name.trim(), section: item.section }] }))
+    set((s) => ({ favourites: [...s.favourites, { name: item.name.trim(), section }] }))
     persist()
   },
   removeFavourite: (normName, section) => {
@@ -173,7 +175,7 @@ export const useStore = create<StoreState>((set, get) => ({
     set({
       recipes: parsed.recipes ?? [],
       savedLists: parsed.savedLists ?? [],
-      favourites: parsed.favourites ?? [],
+      favourites: (parsed.favourites ?? []).map((f: ExtraItem) => ({ name: f.name, section: 'special' as const })),
       selectedRecipeIds: [],
       extras: [],
       checkedNames: [],
