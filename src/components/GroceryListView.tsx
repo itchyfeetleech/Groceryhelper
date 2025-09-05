@@ -103,13 +103,15 @@ function Items({
       {items.map((it) => {
         const checked = checkedNames.includes(it.norm)
         return (
-          <li key={it.norm} className="flex items-center justify-between gap-2 bg-white border rounded px-3 py-2">
-            <div className="flex flex-col gap-1">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={checked} onChange={() => onToggle(it.norm)} aria-label={`Check ${it.name}`} />
-                <span className={checked ? 'line-through text-slate-500' : ''}>{it.name} x {it.count}</span>
-              </label>
-              <div className="flex flex-wrap gap-1">
+          <li key={it.norm} className="flex items-center justify-between gap-3 bg-white border rounded px-3 py-2">
+            <label className="flex items-center gap-2 min-w-0">
+              <input type="checkbox" checked={checked} onChange={() => onToggle(it.norm)} aria-label={`Check ${it.name}`} />
+              <span className={checked ? 'line-through text-slate-500 truncate' : 'truncate'} title={`${it.name} x ${it.count}`}>
+                {it.name} x {it.count}
+              </span>
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex flex-wrap gap-1 justify-end">
                 {it.sources.standard && <span className="text-[10px] px-1 py-0.5 rounded bg-slate-100 border">Standard</span>}
                 {it.sources.special && <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 border">Special</span>}
                 {it.sources.fromFavourite && <span className="text-[10px] px-1 py-0.5 rounded bg-emerald-100 border">Favourite</span>}
@@ -117,18 +119,17 @@ function Items({
                   <span key={n} className="text-[10px] px-1 py-0.5 rounded bg-blue-100 border">{n}</span>
                 ))}
               </div>
+              {canRemove(it.norm) && (
+                <button
+                  className="px-2 py-1 rounded border border-red-300 text-red-700"
+                  onClick={() => onRemove(it.norm)}
+                  aria-label={`Remove extra ${it.name}`}
+                >Remove</button>
+              )}
             </div>
-            {canRemove(it.norm) && (
-              <button
-                className="px-2 py-1 rounded border border-red-300 text-red-700"
-                onClick={() => onRemove(it.norm)}
-                aria-label={`Remove extra ${it.name}`}
-              >Remove extra</button>
-            )}
           </li>
         )
       })}
     </ul>
   )
 }
-

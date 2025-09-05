@@ -12,7 +12,7 @@ export function App() {
             tabs={[
               { to: '/recipes', label: 'Recipes' },
               { to: '/items', label: 'Items' },
-              { to: '/groceries', label: 'Groceries' },
+              { to: '/groceries', label: 'Grocery list' },
               { to: '/settings', label: 'Settings' }
             ]}
             activePath={location.pathname}
