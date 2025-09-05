@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../state/store'
 import { normalizeName } from '../utils/normalization'
+import { FavouritesPanel } from './FavouritesPanel'
 
 export function GroceryBuilder() {
   const { recipes, selectedRecipeIds, setSelectedRecipeIds, extras, addExtra, removeExtra } = useStore()
@@ -101,8 +102,8 @@ export function GroceryBuilder() {
             </div>
           )}
         </div>
+        <FavouritesPanel />
       </section>
     </div>
   )
 }
-

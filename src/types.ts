@@ -26,7 +26,7 @@ export type StorageSchemaV1 = {
   schemaVersion: 1
   recipes: Recipe[]
   savedLists: SavedList[]
+  favourites?: ExtraItem[]
 }
 
 export type StorageSchema = StorageSchemaV1
-

@@ -7,6 +7,7 @@ import { uid } from '../utils/id'
 type StoreState = {
   recipes: Recipe[]
   savedLists: SavedList[]
+  favourites: ExtraItem[]
 
   // Current groceries builder state (not persisted separately; goes into saved list)
   selectedRecipeIds: string[]
@@ -26,6 +27,10 @@ type StoreState = {
   toggleChecked: (normName: string) => void
   clearChecks: () => void
 
+  // Favourites
+  addFavourite: (item: ExtraItem) => void
+  removeFavourite: (normName: string, section: 'standard' | 'special') => void
+
   // Saved lists
   saveCurrentAs: (name: string) => string
   loadSavedList: (id: string) => void
@@ -41,6 +46,7 @@ const persisted: StorageSchema = loadStorage()
 export const useStore = create<StoreState>((set, get) => ({
   recipes: persisted.recipes,
   savedLists: persisted.savedLists,
+  favourites: persisted.favourites ?? [],
   selectedRecipeIds: [],
   extras: [],
   checkedNames: [],
@@ -96,6 +102,21 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   clearChecks: () => set({ checkedNames: [] }),
 
+  addFavourite: (item) => {
+    const norm = normalizeName(item.name)
+    if (!norm) return
+    const exists = get().favourites.some((e) => normalizeName(e.name) === norm && e.section === item.section)
+    if (exists) return
+    set((s) => ({ favourites: [...s.favourites, { name: item.name.trim(), section: item.section }] }))
+    persist()
+  },
+  removeFavourite: (normName, section) => {
+    set((s) => ({
+      favourites: s.favourites.filter((e) => !(normalizeName(e.name) === normName && e.section === section)),
+    }))
+    persist()
+  },
+
   saveCurrentAs: (name) => {
     const now = new Date().toISOString()
     const state = get()
@@ -140,6 +161,7 @@ export const useStore = create<StoreState>((set, get) => ({
       schemaVersion: 1,
       recipes: get().recipes,
       savedLists: get().savedLists,
+      favourites: get().favourites,
     }
     return JSON.stringify(data, null, 2)
   },
@@ -151,6 +173,7 @@ export const useStore = create<StoreState>((set, get) => ({
     set({
       recipes: parsed.recipes ?? [],
       savedLists: parsed.savedLists ?? [],
+      favourites: parsed.favourites ?? [],
       selectedRecipeIds: [],
       extras: [],
       checkedNames: [],
@@ -162,6 +185,5 @@ export const useStore = create<StoreState>((set, get) => ({
 
 function persist() {
   const s = useStore.getState()
-  saveStorage({ schemaVersion: 1, recipes: s.recipes, savedLists: s.savedLists })
+  saveStorage({ schemaVersion: 1, recipes: s.recipes, savedLists: s.savedLists, favourites: s.favourites })
 }
-
