@@ -68,7 +68,10 @@ export function RecipeList() {
                     <span className="text-xs">This week</span>
                   </label>
                   <button className="btn-icon" onClick={() => setEditingId(r.id)} title="Edit recipe" aria-label={`Edit ${r.title || 'recipe'}`}>
-                    <svg aria-hidden="true" viewBox="0 0 20 20" className="w-4 h-4 fill-current"><path d="M2 14.5V18h3.5l9.9-9.9-3.5-3.5L2 14.5Zm12.8-10.3 3.5 3.5 1.1-1.1a1.5 1.5 0 0 0 0-2.1L16.5.7a1.5 1.5 0 0 0-2.1 0l-1.1 1.1 1.5 1.5Z"/></svg>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Z"/>
+                      <path d="M14.06 6.19l1.77-1.77a2.5 2.5 0 1 1 3.54 3.54L17.6 9.73"/>
+                    </svg>
                     <span className="sr-only">Edit</span>
                   </button>
                   <button
@@ -79,7 +82,10 @@ export function RecipeList() {
                     title="Delete recipe"
                     aria-label={`Delete ${r.title || 'recipe'}`}
                   >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" className="w-4 h-4 fill-current"><path d="M6 2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2h4v2H0V2h6Zm2 18a2 2 0 0 1-2-2V6h12v12a2 2 0 0 1-2 2H8Zm2-10h2v8h-2v-8Zm6 0h-2v8h2v-8ZM8 10H6v8h2v-8Z"/></svg>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 7h12M9 7l1-2h4l1 2M8 7v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7"/>
+                      <path d="M10 11v6M14 11v6"/>
+                    </svg>
                     <span className="sr-only">Delete</span>
                   </button>
                 </div>

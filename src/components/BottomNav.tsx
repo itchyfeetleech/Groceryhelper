@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom'
 
 export function BottomNav({ activePath }: { activePath: string }) {
   const items = [
-    { to: '/recipes', label: 'Recipes', icon: RecipeIcon },
-    { to: '/items', label: 'Items', icon: ItemsIcon },
-    { to: '/groceries', label: 'Groceries', icon: ListIcon },
-    { to: '/settings', label: 'Settings', icon: SettingsIcon },
+    { to: '/recipes', label: 'Recipes', icon: FireBookIcon },
+    { to: '/items', label: 'Items', icon: BasketIcon },
+    { to: '/groceries', label: 'Groceries', icon: ChecklistIcon },
+    { to: '/settings', label: 'Settings', icon: GearIcon },
   ]
   return (
     <nav className="apk-bottom-nav" aria-label="Primary">
@@ -27,24 +27,44 @@ export function BottomNav({ activePath }: { activePath: string }) {
   )
 }
 
-function RecipeIcon({ className = '' }) {
-  return (
-    <svg viewBox="0 0 20 20" className={className} aria-hidden="true"><path fill="currentColor" d="M2 2h16v2H2V2Zm1 5h14l-1.5 9a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2L3 7Zm4 2v7h2V9H7Zm4 0v7h2V9h-2Z"/></svg>
-  )
+function svg(props: React.SVGProps<SVGSVGElement>) { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props} /> }
+
+function FireBookIcon({ className = '' }) {
+  return svg({ className, children: (
+    <>
+      <path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z"/>
+      <path d="M5 17h12"/>
+      <path d="M13.5 9.5c1-1.2 2.8-1.2 3.8 0 1 1.1.7 2.8-.4 3.8l-3.4 3.2-.3-.3"/>
+    </>
+  ) })
 }
-function ItemsIcon({ className = '' }) {
-  return (
-    <svg viewBox="0 0 20 20" className={className} aria-hidden="true"><path fill="currentColor" d="M3 3h14v4H3V3Zm0 6h14v4H3V9Zm0 6h14v2H3v-2Z"/></svg>
-  )
+function BasketIcon({ className = '' }) {
+  return svg({ className, children: (
+    <>
+      <path d="M4 10h16l-1.2 8a3 3 0 0 1-3 3H8.2a3 3 0 0 1-3-3L4 10Z"/>
+      <path d="M9 10l3-5 3 5"/>
+      <path d="M10 14v4M14 14v4"/>
+    </>
+  ) })
 }
-function ListIcon({ className = '' }) {
-  return (
-    <svg viewBox="0 0 20 20" className={className} aria-hidden="true"><path fill="currentColor" d="M2 4h2v2H2V4Zm4 0h12v2H6V4ZM2 9h2v2H2V9Zm4 0h12v2H6V9ZM2 14h2v2H2v-2Zm4 0h12v2H6v-2Z"/></svg>
-  )
+function ChecklistIcon({ className = '' }) {
+  return svg({ className, children: (
+    <>
+      <path d="M4 6h10"/>
+      <path d="M4 12h10"/>
+      <path d="M4 18h10"/>
+      <path d="M17 5l2 2 3-3"/>
+      <path d="M17 11l2 2 3-3"/>
+    </>
+  ) })
 }
-function SettingsIcon({ className = '' }) {
-  return (
-    <svg viewBox="0 0 20 20" className={className} aria-hidden="true"><path fill="currentColor" d="M8.6 0h2.8l.4 2.3 2 .8 1.9-1.3 2 2-1.3 1.9.8 2 .2 1.1-2.8.5-.5-1.4-1.5-1.5-1.4-.5L9.8 8l.5 1.4 1.5 1.5 1.4.5.5 2.8-1.1.2-2 .8 1.3 1.9-2 2-1.9-1.3-2 .8L8.6 20H5.8l-.4-2.3-2-.8-1.9 1.3-2-2 1.3-1.9-.8-2L0 10.2l2.8-.5.5 1.4 1.5 1.5 1.4.5L10.2 12l-.5-1.4L8.2 9.1l-1.4-.5-.5-2.8 1.1-.2 2-.8L8.2 2.9l2-2 1.9 1.3 2-.8L11.4 0H8.6ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
-  )
+function GearIcon({ className = '' }) {
+  return svg({ className, children: (
+    <>
+      <path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/>
+      <path d="M4.9 8.6l-1.4-2.4 2.1-2.1 2.4 1.4M19.1 8.6l1.4-2.4-2.1-2.1-2.4 1.4"/>
+      <path d="M19.1 15.4l1.4 2.4-2.1 2.1-2.4-1.4M4.9 15.4l-1.4 2.4 2.1 2.1 2.4-1.4"/>
+    </>
+  ) })
 }
 

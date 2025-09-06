@@ -70,6 +70,7 @@ export function SettingsPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Settings</h1>
+      <div className="text-sm muted">Version: {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'}</div>
       <section className="space-y-2">
         <h2 className="font-medium">Sync</h2>
         {syncEnabled ? (

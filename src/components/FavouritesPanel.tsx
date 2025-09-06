@@ -47,13 +47,11 @@ export function FavouritesPanel() {
                   />
                   <span className="text-xs">This week</span>
                 </label>
-                <button
-                  className="btn-icon btn-icon-danger"
-                  onClick={() => removeFavourite(norm, 'standard')}
-                  aria-label={`Remove favourite ${f.name}`}
-                  title="Remove favourite"
-                >
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="w-4 h-4 fill-current"><path d="M6 2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2h4v2H0V2h6Zm2 18a2 2 0 0 1-2-2V6h12v12a2 2 0 0 1-2 2H8Zm2-10h2v8h-2v-8Zm6 0h-2v8h2v-8ZM8 10H6v8h2v-8Z"/></svg>
+                <button className="btn-icon btn-icon-danger" onClick={() => removeFavourite(norm, 'standard')} aria-label={`Remove favourite ${f.name}`} title="Remove favourite">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 7h12M9 7l1-2h4l1 2M8 7v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7"/>
+                    <path d="M10 11v6M14 11v6"/>
+                  </svg>
                   <span className="sr-only">Remove</span>
                 </button>
               </div>
