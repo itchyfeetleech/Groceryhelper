@@ -9,7 +9,7 @@
   "backgroundColor": "#0f172a",
   "enableNotifications": false,
   "startUrl": "/Groceryhelper/",
-  "iconUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+  "iconUrl": "https://raw.githubusercontent.com/itchyfeetleech/Groceryhelper/android-apk/public/icons/app-icon-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./android.keystore",
