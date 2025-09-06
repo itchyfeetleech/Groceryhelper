@@ -7,6 +7,10 @@ import { RecipesPage } from './routes/RecipesPage'
 import { GroceriesPage } from './routes/GroceriesPage'
 import { SettingsPage } from './routes/SettingsPage'
 import { ItemsPage } from './routes/ItemsPage'
+import { detectApkAndPersist } from './utils/apk'
+
+// Run APK detection as early as possible, before first render
+try { detectApkAndPersist() } catch {}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
