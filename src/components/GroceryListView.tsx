@@ -102,7 +102,7 @@ export function GroceryListView() {
       )}
 
       <section>
-        {!apk && <h2 className="font-medium mb-2">Grocery list</h2>}
+        <h2 className="font-medium mb-2 hidden md:block">Grocery list</h2>
         <div className="flex items-center justify-between mb-2 text-sm">
           <div className="flex items-center gap-2 text-slate-600">
             <ProgressRing progress={progress} ariaLabel={`Progress ${Math.round(progress * 100)}%`} />

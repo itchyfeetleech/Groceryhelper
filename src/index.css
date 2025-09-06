@@ -58,6 +58,7 @@ body {
 /* Bottom sheet and FAB */
 .fab { position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0) + 88px); width: 56px; height: 56px; border-radius: 9999px; background: #10b981; color: #fff; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 8px 30px rgba(16,185,129,0.45); z-index: 45; }
 .sheet { position: fixed; left: 0; right: 0; bottom: 0; transform: translateY(100%); transition: transform 220ms cubic-bezier(.2,.8,.2,1); background: rgba(255,255,255,0.98); backdrop-filter: blur(8px); border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 12px; box-shadow: 0 -8px 30px rgba(2,6,23,0.12); z-index: 45; }
+.apk .sheet { background: #ffffff; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .sheet.open { transform: translateY(0); }
 
 /* Bottom nav icon bounce */
@@ -66,12 +67,14 @@ body {
 
 /* APK-only helpers */
 .apk body {
-  /* Make body non-scrollable so nested root handles scrolling (prevents PTR) */
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100dvh;
-  overflow: hidden;
+  /* Allow body to scroll; rely on overscroll-behavior to suppress PTR */
+  position: static;
+  inset: auto;
+  width: auto;
+  height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #f8fafc;
 }
 
 .apk .has-bottom-nav { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 72px); }
@@ -86,31 +89,17 @@ body {
   border-top: 1px solid #e5e7eb;
   z-index: 40;
 }
+.apk .apk-bottom-nav { background: #ffffff; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .apk-nav-link { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; color: #334155; padding: 6px 10px; border-radius: 10px; }
 .apk-nav-link.active { color: #065f46; background: #ecfdf5; }
 
-.apk .apk-root {
-  /* App root fills viewport and delegates scroll to <main> */
-  background-color: #f8fafc;
-  height: 100dvh;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+.apk .apk-root { background-color: #f8fafc; min-height: 100dvh; }
 
 /* Always hide the large header in APK */
 .apk .app-header { display: none !important; }
 
 /* Improve mobile scrolling within content area */
-.apk main {
-  flex: 1 1 auto;
-  min-height: 0; /* allow child to actually scroll */
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
-  overscroll-behavior-y: contain;
-}
+.apk main { overflow: visible; touch-action: pan-y; }
 
 /* Sticky add bar for groceries on APK */
 .apk .apk-addbar {
