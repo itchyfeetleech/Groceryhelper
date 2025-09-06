@@ -17,7 +17,7 @@ export function IngredientChips({ items, onDelete, onMoveUp, onMoveDown }: Props
           <div className="flex gap-1">
             <button
               type="button"
-              className="inline-flex items-center px-1 rounded border border-slate-300 hover:bg-slate-200 disabled:opacity-50"
+              className="btn-icon disabled:opacity-50"
               aria-label={`Move ${ing} up`}
               onClick={() => onMoveUp(i)}
               disabled={i === 0}
@@ -26,7 +26,7 @@ export function IngredientChips({ items, onDelete, onMoveUp, onMoveDown }: Props
             </button>
             <button
               type="button"
-              className="inline-flex items-center px-1 rounded border border-slate-300 hover:bg-slate-200 disabled:opacity-50"
+              className="btn-icon disabled:opacity-50"
               aria-label={`Move ${ing} down`}
               onClick={() => onMoveDown(i)}
               disabled={i === items.length - 1}
@@ -35,7 +35,7 @@ export function IngredientChips({ items, onDelete, onMoveUp, onMoveDown }: Props
             </button>
             <button
               type="button"
-              className="inline-flex items-center px-1 rounded border border-red-300 text-red-700 hover:bg-red-100"
+              className="btn-icon btn-icon-danger"
               aria-label={`Remove ${ing}`}
               onClick={() => onDelete(i)}
             >
@@ -47,4 +47,3 @@ export function IngredientChips({ items, onDelete, onMoveUp, onMoveDown }: Props
     </ul>
   )
 }
-

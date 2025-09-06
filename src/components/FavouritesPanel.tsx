@@ -24,7 +24,7 @@ export function FavouritesPanel() {
   const renderList = () => {
     if (list.length === 0) return <p className="text-sm text-slate-500">None</p>
     return (
-      <ul className="divide-y border rounded bg-white max-h-60 overflow-auto">
+      <ul className="divide-y card max-h-60 overflow-auto">
         {list.map((f, i) => {
           const norm = normalizeName(f.name)
           const key = `standard:${norm}`
@@ -48,11 +48,13 @@ export function FavouritesPanel() {
                   <span className="text-xs">This week</span>
                 </label>
                 <button
-                  className="px-2 py-1 rounded border border-red-300 text-red-700 hover:bg-red-50 active:bg-red-100"
+                  className="btn-icon btn-icon-danger"
                   onClick={() => removeFavourite(norm, 'standard')}
                   aria-label={`Remove favourite ${f.name}`}
+                  title="Remove favourite"
                 >
-                  Remove
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="w-4 h-4 fill-current"><path d="M6 2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2h4v2H0V2h6Zm2 18a2 2 0 0 1-2-2V6h12v12a2 2 0 0 1-2 2H8Zm2-10h2v8h-2v-8Zm6 0h-2v8h2v-8ZM8 10H6v8h2v-8Z"/></svg>
+                  <span className="sr-only">Remove</span>
                 </button>
               </div>
             </li>
@@ -75,11 +77,11 @@ export function FavouritesPanel() {
               addFav()
             }
           }}
-          className="flex-1 border rounded px-3 py-2"
+          className="flex-1 input"
           placeholder="Add favourite item (always standard)"
           aria-label="Favourite item name"
         />
-        <button className="px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50" onClick={addFav} disabled={!favName.trim()}>
+        <button className="btn-primary" onClick={addFav} disabled={!favName.trim()}>
           Add Favourite
         </button>
       </div>

@@ -31,6 +31,11 @@ body {
 .btn { @apply inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed; }
 .btn-primary { @apply inline-flex items-center justify-center rounded-md border border-transparent bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed; }
 .btn-danger { @apply inline-flex items-center justify-center rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 active:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed; }
+.btn-xs { @apply text-[12px] px-2 py-1 rounded; }
+.btn-icon { @apply inline-flex items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 h-8 w-8 shadow-sm hover:bg-slate-50 active:bg-slate-100; }
+.btn-icon-danger { @apply text-red-700 border-red-300 hover:bg-red-50 active:bg-red-100; }
+.btn-ghost { @apply inline-flex items-center justify-center rounded-md border border-transparent bg-transparent text-slate-700 hover:bg-slate-100 active:bg-slate-200; }
+.btn-ghost-danger { @apply text-red-700 hover:bg-red-50 active:bg-red-100; }
 .input { @apply w-full border border-slate-300 rounded-md px-3 py-2 text-[15px] focus-visible:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400; }
 .card { @apply bg-white border border-slate-200 rounded-lg shadow-sm; }
 .muted { @apply text-slate-500; }
@@ -71,6 +76,14 @@ body {
 
 /* Always hide the large header in APK */
 .apk .app-header { display: none !important; }
+
+/* Improve mobile scrolling within content area */
+.apk main {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
+}
 
 /* Sticky add bar for groceries on APK */
 .apk .apk-addbar {
