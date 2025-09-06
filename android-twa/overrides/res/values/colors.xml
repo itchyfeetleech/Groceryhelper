@@ -2,5 +2,6 @@
 <resources>
     <!-- Background color for adaptive launcher icon -->
     <color name="ic_launcher_background">#a6dcc9</color>
+    <!-- Fallback background for app shortcuts (if referenced) -->
+    <color name="shortcut_background">#a6dcc9</color>
 </resources>
-

@@ -64,8 +64,10 @@ jobs:
           # Ensure res directories exist
           mkdir -p android-twa/app/src/main/res/values
           mkdir -p android-twa/app/src/main/res/mipmap-anydpi-v26
+          mkdir -p android-twa/app/src/main/res/xml
           # Copy overrides into the generated project
           cp -f android-twa/overrides/res/values/colors.xml android-twa/app/src/main/res/values/colors.xml
+          cp -f android-twa/overrides/res/xml/shortcuts.xml android-twa/app/src/main/res/xml/shortcuts.xml
           # If an ic_launcher.xml exists, update its background reference; else, add ours
           if [ -f android-twa/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml ]; then
             sed -i -E 's|(\<background[^>]*android:drawable=")([^"]+)(".*)|\1@color/ic_launcher_background\3|' android-twa/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
