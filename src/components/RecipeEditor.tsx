@@ -86,7 +86,7 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
         <label htmlFor="title" className="block text-sm font-medium">Title</label>
         <input
           id="title"
-          className="mt-1 w-full border rounded px-3 py-2"
+          className="mt-1 input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
@@ -102,7 +102,7 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
           <input
             ref={stdInput}
             placeholder="Add ingredient and press Enter"
-            className="flex-1 border rounded px-3 py-2"
+            className="flex-1 input"
             onKeyDown={(e) => {
               if (e.key === 'Enter') { e.preventDefault(); handleAddStandard() }
             }}
@@ -125,7 +125,7 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
           <input
             ref={spcInput}
             placeholder="Add ingredient and press Enter"
-            className="flex-1 border rounded px-3 py-2"
+            className="flex-1 input"
             onKeyDown={(e) => {
               if (e.key === 'Enter') { e.preventDefault(); handleAddSpecial() }
             }}
@@ -147,7 +147,7 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
       )}
 
       <div className="flex gap-2">
-        <button type="submit" className="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50">Save</button>
+        <button type="submit" className="btn-primary">Save</button>
       </div>
     </form>
   )

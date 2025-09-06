@@ -19,8 +19,8 @@ export function NavTabs({
                 className={
                   'inline-flex items-center rounded-lg px-3 py-1.5 text-sm border shadow-sm transition-colors ' +
                   (active
-                    ? 'bg-emerald-600 border-emerald-600 text-white'
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50')
+                    ? 'tab-active'
+                    : 'tab-idle')
                 }
                 aria-current={active ? 'page' : undefined}
               >

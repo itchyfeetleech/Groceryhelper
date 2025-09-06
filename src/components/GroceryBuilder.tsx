@@ -69,7 +69,7 @@ export function GroceryBuilder() {
                 addExtraItem()
               }
             }}
-            className="flex-1 border rounded px-3 py-2"
+            className="flex-1 input"
             placeholder="Add extra item"
             aria-label="Extra item name"
           />
@@ -82,7 +82,7 @@ export function GroceryBuilder() {
             <option value="standard">Standard</option>
             <option value="special">Special</option>
           </select>
-          <button className="px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50" onClick={addExtraItem} disabled={!extraName.trim()}>Add</button>
+          <button className="btn-primary" onClick={addExtraItem} disabled={!extraName.trim()}>Add</button>
         </div>
         <div className="mt-2 text-sm text-slate-600">
           <p>Extras aggregate with recipe items. No duplicates per section.</p>

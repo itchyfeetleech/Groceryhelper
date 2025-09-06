@@ -18,7 +18,7 @@ export function ProgressRing({ size = 28, stroke = 3, progress, ariaLabel }: Pro
       />
       <circle
         className="progress-ring"
-        stroke="#059669"
+        stroke="var(--accent-600)"
         fill="transparent"
         strokeLinecap="round"
         strokeWidth={stroke}
@@ -30,4 +30,3 @@ export function ProgressRing({ size = 28, stroke = 3, progress, ariaLabel }: Pro
     </svg>
   )
 }
-
