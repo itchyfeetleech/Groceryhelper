@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useEffect, useState as useReactState } from 'react'
-import { useSyncAuth, signOutSync } from '../sync'
+import { useSyncAuth, signOutSync, signInWithGoogle } from '../sync'
 import { useStore } from '../state/store'
 
 export function SettingsPage() {
@@ -9,15 +9,25 @@ export function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [syncEnabled, setSyncEnabled] = useReactState(false)
   const [userId, setUserId] = useReactState<string | null>(null)
+  const [userLabel, setUserLabel] = useReactState<string | null>(null)
+  const [isAnonymous, setIsAnonymous] = useReactState<boolean>(false)
 
   useEffect(() => {
     const { enabled, user } = useSyncAuth()
     setSyncEnabled(enabled)
     setUserId(user?.uid ?? null)
+    setIsAnonymous(!!user?.isAnonymous)
+    const provider = user?.providerData?.[0]
+    const label = provider?.displayName || provider?.email || (user?.uid ? user.uid.slice(0, 8) : null)
+    setUserLabel(label ?? null)
     const i = setInterval(() => {
       const { enabled, user } = useSyncAuth()
       setSyncEnabled(enabled)
       setUserId(user?.uid ?? null)
+      setIsAnonymous(!!user?.isAnonymous)
+      const provider = user?.providerData?.[0]
+      const label = provider?.displayName || provider?.email || (user?.uid ? user.uid.slice(0, 8) : null)
+      setUserLabel(label ?? null)
     }, 1000)
     return () => clearInterval(i)
   }, [])
@@ -63,9 +73,27 @@ export function SettingsPage() {
       <section className="space-y-2">
         <h2 className="font-medium">Sync</h2>
         {syncEnabled ? (
-          <div className="flex items-center gap-3">
-            <div className="text-sm text-slate-700">Signed in {userId ? `as ${userId.slice(0,8)}…` : '(initializing)'} via Anonymous Auth</div>
-            <button className="px-3 py-2 rounded border hover:bg-slate-50 active:bg-slate-100" onClick={signOutSync}>Sign out</button>
+          <div className="flex flex-col gap-2">
+            <div className="text-sm text-slate-700">
+              {userId ? (
+                isAnonymous ? (
+                  <>Signed in anonymously (temporary). You can upgrade to Google.</>
+                ) : (
+                  <>Signed in as <span className="font-medium">{userLabel}</span> via Google</>
+                )
+              ) : 'Initializing...'}
+            </div>
+            <div className="flex items-center gap-2">
+              {isAnonymous && (
+                <button
+                  className="px-3 py-2 rounded border hover:bg-slate-50 active:bg-slate-100"
+                  onClick={() => void signInWithGoogle()}
+                >
+                  Sign in with Google
+                </button>
+              )}
+              <button className="px-3 py-2 rounded border hover:bg-slate-50 active:bg-slate-100" onClick={signOutSync}>Sign out</button>
+            </div>
           </div>
         ) : (
           <div className="text-sm text-slate-500">Sync not configured. Set Vite env vars for Firebase and rebuild.</div>
@@ -90,3 +118,4 @@ export function SettingsPage() {
     </div>
   )
 }
+

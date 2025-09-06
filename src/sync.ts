@@ -1,6 +1,6 @@
 import { fb } from './firebase'
 import { doc, getDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
-import { onAuthStateChanged, signInAnonymously, type User } from 'firebase/auth'
+import { onAuthStateChanged, signInAnonymously, GoogleAuthProvider, linkWithPopup, signInWithPopup, linkWithRedirect, signInWithRedirect, type User } from 'firebase/auth'
 import type { StorageSchema } from './types'
 
 let currentUser: User | null = null
@@ -100,6 +100,29 @@ export async function signOutSync() {
   if (fb.auth) await fb.auth.signOut()
 }
 
+export async function signInWithGoogle() {
+  if (!fb.auth) return
+  const provider = new GoogleAuthProvider()
+  try {
+    if (currentUser && currentUser.isAnonymous) {
+      await linkWithPopup(currentUser, provider)
+    } else {
+      await signInWithPopup(fb.auth, provider)
+    }
+  } catch (e: any) {
+    // Popup blocked or disallowed; try redirect
+    try {
+      if (currentUser && currentUser.isAnonymous) {
+        await linkWithRedirect(currentUser, provider)
+      } else {
+        await signInWithRedirect(fb.auth, provider)
+      }
+    } catch {
+      // ignore
+    }
+  }
+}
+
 function isEmptyLocal(s: StorageSchema): boolean {
   return (s.recipes?.length ?? 0) === 0 && (s.savedLists?.length ?? 0) === 0 && (s.favourites?.length ?? 0) === 0
 }
@@ -125,4 +148,3 @@ export function bumpLocalUpdatedAt() {
 export function getLocalUpdatedAt(): string | null {
   try { return localStorage.getItem(UPDATED_KEY) } catch { return null }
 }
-

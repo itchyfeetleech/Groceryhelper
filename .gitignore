@@ -5,3 +5,13 @@ dist
 *.log
 coverage
 
+# Local environment files (do not commit secrets)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# TypeScript build info
+*.tsbuildinfo
