@@ -37,7 +37,10 @@ export function App() {
     onSwipedLeft: () => { if (apk && idx >= 0 && idx < routes.length - 1) navigate(routes[idx + 1]) },
     onSwipedRight: () => { if (apk && idx > 0) navigate(routes[idx - 1]) },
     trackMouse: false,
-    preventScrollOnSwipe: true,
+    preventScrollOnSwipe: false,
+    delta: 40,
+    trackTouch: true,
+    touchEventOptions: { passive: true },
   })
 
   const [scrolled, setScrolled] = useState(false)

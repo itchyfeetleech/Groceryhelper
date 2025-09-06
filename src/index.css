@@ -90,12 +90,13 @@ body {
 .apk-nav-link.active { color: #065f46; background: #ecfdf5; }
 
 .apk .apk-root {
-  /* Root takes over scrolling and fills the viewport */
+  /* App root fills viewport and delegates scroll to <main> */
   background-color: #f8fafc;
-  height: 100%;
-  min-height: 100dvh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Always hide the large header in APK */
@@ -103,6 +104,8 @@ body {
 
 /* Improve mobile scrolling within content area */
 .apk main {
+  flex: 1 1 auto;
+  min-height: 0; /* allow child to actually scroll */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;

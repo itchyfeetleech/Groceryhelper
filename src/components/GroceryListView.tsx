@@ -215,7 +215,10 @@ function Items({
         const handlers = useSwipeable({
           onSwipedLeft: () => { if (canRemove(it.norm)) onRemove(it.norm) },
           onSwipedRight: () => onToggle(it.norm),
-          preventScrollOnSwipe: true,
+          preventScrollOnSwipe: false,
+          delta: 35,
+          trackTouch: true,
+          touchEventOptions: { passive: true },
         })
         return (
           <li key={it.norm} className={
