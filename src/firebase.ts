@@ -19,7 +19,13 @@ const cfg = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID as string | undefined,
 }
 
-const hasConfig = Object.values(cfg).every(Boolean)
+// Only require the fields needed to initialize the Firebase app.
+const hasConfig = [
+  cfg.apiKey,
+  cfg.authDomain,
+  cfg.projectId,
+  cfg.appId,
+].every(Boolean)
 
 const bundle: FirebaseBundle = { enabled: hasConfig }
 
