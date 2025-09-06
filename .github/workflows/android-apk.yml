@@ -68,14 +68,15 @@ jobs:
       - name: Build signed release (Bubblewrap)
         if: env.HAS_RELEASE == 'true'
         shell: bash
+        working-directory: android-twa
         env:
           BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD }}
           BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
         run: |
+          chmod +x gradlew || true
           npx @bubblewrap/cli build \
-            --directory android-twa \
-            --manifest android-twa/twa-manifest.json \
-            --signingKeyPath android-twa/android.keystore \
+            --manifest twa-manifest.json \
+            --signingKeyPath android.keystore \
             --signingKeyAlias "${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}"
 
       - name: Compute SHA256 and cert fingerprint (release)
