@@ -58,6 +58,21 @@ jobs:
             --directory android-twa \
             --manifest android-twa/twa-manifest.json
 
+      - name: Override adaptive icon background color
+        shell: bash
+        run: |
+          # Ensure res directories exist
+          mkdir -p android-twa/app/src/main/res/values
+          mkdir -p android-twa/app/src/main/res/mipmap-anydpi-v26
+          # Copy overrides into the generated project
+          cp -f android-twa/overrides/res/values/colors.xml android-twa/app/src/main/res/values/colors.xml
+          # If an ic_launcher.xml exists, update its background reference; else, add ours
+          if [ -f android-twa/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml ]; then
+            sed -i -E 's|(\<background[^>]*android:drawable=")([^"]+)(".*)|\1@color/ic_launcher_background\3|' android-twa/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          else
+            cp -f android-twa/overrides/res/mipmap-anydpi-v26/ic_launcher.xml android-twa/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          fi
+
       - name: Prepare release keystore
         if: env.HAS_RELEASE == 'true'
         shell: bash
