@@ -8,10 +8,14 @@
     <link rel="icon" href="/favicon.ico" />
     <link rel="manifest" href="manifest.webmanifest" />
     <script>
-      // Apply APK class ASAP based on persisted flag to avoid flicker
+      // Apply APK class ASAP to avoid flicker (persisted flag, referrer, or ?apk)
       try {
-        if (localStorage.getItem('isApk') === '1') {
+        var ref = document.referrer || ''
+        var fromTwa = ref.indexOf('android-app://com.itchyfeetleech.groceryhelper') === 0
+        var hasParam = location.search.indexOf('apk') >= 0
+        if (fromTwa || hasParam || localStorage.getItem('isApk') === '1') {
           document.documentElement.classList.add('apk')
+          try { localStorage.setItem('isApk', '1') } catch (e) {}
         }
       } catch (e) {}
     </script>
