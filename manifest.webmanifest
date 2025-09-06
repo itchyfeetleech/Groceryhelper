@@ -3,8 +3,8 @@
   "short_name": "GroceryHelper",
   "start_url": "https://itchyfeetleech.github.io/Groceryhelper/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#fff7ed",
+  "theme_color": "#ea580c",
   "description": "Store recipes and generate aggregated grocery lists.",
   "icons": [
     {
