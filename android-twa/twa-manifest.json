@@ -8,7 +8,7 @@
   "navigationColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "enableNotifications": false,
-  "startUrl": "/Groceryhelper/",
+  "startUrl": "/Groceryhelper/?apk=1",
   "iconUrl": "https://raw.githubusercontent.com/itchyfeetleech/Groceryhelper/android-apk/public/icons/app-icon-512.png",
   "maskableIconUrl": "https://raw.githubusercontent.com/itchyfeetleech/Groceryhelper/android-apk/public/icons/app-icon-512.png",
   "splashScreenFadeOutDuration": 300,
