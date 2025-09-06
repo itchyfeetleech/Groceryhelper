@@ -63,6 +63,10 @@ export function GroceryListView() {
   const progress = totalCount > 0 ? (totalCount - remainingCount) / totalCount : 0
   const { show } = useToast()
   const [showAdd, setShowAdd] = useState(false)
+  const [virtualize, setVirtualize] = useState(false)
+  useEffect(() => {
+    if (!virtualize && totalCount > 120) setVirtualize(true)
+  }, [totalCount, virtualize])
 
   // Celebrate when finished
   useEffect(() => {
@@ -172,24 +176,18 @@ export function GroceryListView() {
         <div ref={liveRef} aria-live="polite" className="sr-only" />
       </div>
       {apk && (
-        <>
-          <button className="fab tap-ripple" aria-label="Add item" onClick={() => setShowAdd((s) => !s)}>
-            <svg aria-hidden="true" viewBox="0 0 20 20" className="w-6 h-6 fill-current"><path d="M9 0h2v9h9v2h-9v9H9v-9H0V9h9V0Z"/></svg>
-          </button>
-          <div className={showAdd ? 'sheet open' : 'sheet'} role="dialog" aria-label="Add item">
-            <div className="flex items-center gap-2">
-              <input
-                value={extraName}
-                onChange={(e) => setExtraName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExtraItem(); setShowAdd(false) } }}
-                className="input flex-1"
-                placeholder="Add item"
-                aria-label="Add individual item"
-              />
-              <button className="btn-primary" onClick={() => { addExtraItem(); setShowAdd(false); haptic('medium') }} disabled={!extraName.trim()}>Add</button>
-            </div>
-          </div>
-        </>
+        <div className="apk-addbar" role="form" aria-label="Add item">
+          <input
+            value={extraName}
+            onChange={(e) => setExtraName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExtraItem(); haptic('medium') } }}
+            className="apk-addbar-input"
+            placeholder="Add item"
+            aria-label="Add individual item"
+            enterKeyHint="done"
+          />
+          <button className="apk-addbar-btn" onClick={() => { addExtraItem(); haptic('medium') }} disabled={!extraName.trim()}>Add</button>
+        </div>
       )}
     </div>
   )
@@ -209,7 +207,10 @@ function Items({
   canRemove: (norm: string) => boolean
 }) {
   if (items.length === 0) return <p className="text-sm text-slate-500">No items.</p>
-  const shouldVirtualize = items.length > 120
+  // Stabilize virtualization to avoid toggling around the threshold
+  const [everVirtual, setEverVirtual] = useState(items.length > 120)
+  useEffect(() => { if (items.length > 120) setEverVirtual(true) }, [items.length])
+  const shouldVirtualize = everVirtual
   if (shouldVirtualize) {
     const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const it = items[index]
