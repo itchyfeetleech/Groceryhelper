@@ -3,6 +3,11 @@ import { useStore } from '../state/store'
 import { aggregateUnified } from '../utils/aggregate'
 import { normalizeName } from '../utils/normalization'
 import { useIsApk } from '../utils/apk'
+import { useAnimatedNumber } from '../hooks/useAnimatedNumber'
+import { ProgressRing } from '../ui/ProgressRing'
+import { useToast } from '../ui/Toast'
+import { haptic } from '../utils/haptics'
+import { useSwipeable } from 'react-swipeable'
 
 export function GroceryListView() {
   const apk = useIsApk()
@@ -52,6 +57,19 @@ export function GroceryListView() {
   const completed = agg.filter((i) => checkedSet.has(i.norm))
   const totalCount = agg.length
   const remainingCount = remaining.length
+  const animRemaining = useAnimatedNumber(remainingCount)
+  const animTotal = useAnimatedNumber(totalCount)
+  const progress = totalCount > 0 ? (totalCount - remainingCount) / totalCount : 0
+  const { show } = useToast()
+  const [showAdd, setShowAdd] = useState(false)
+
+  // Celebrate when finished
+  useEffect(() => {
+    if (apk && totalCount > 0 && remainingCount === 0) {
+      haptic('heavy')
+      import('canvas-confetti').then((m) => m.default({ particleCount: 60, spread: 60, origin: { y: 0.8 } })).catch(() => {})
+    }
+  }, [apk, totalCount, remainingCount])
 
   return (
     <div className="space-y-4">
@@ -86,8 +104,13 @@ export function GroceryListView() {
       <section>
         <h2 className="font-medium mb-2">Grocery list</h2>
         <div className="flex items-center justify-between mb-2 text-sm">
-          <div className="text-slate-600">
-            <span className="font-medium text-slate-800">{remainingCount}</span> of <span className="font-medium text-slate-800">{totalCount}</span> remaining
+          <div className="flex items-center gap-2 text-slate-600">
+            <ProgressRing progress={progress} ariaLabel={`Progress ${Math.round(progress * 100)}%`} />
+            <div>
+              <span className="font-medium text-slate-800">{animRemaining}</span>
+              {' '}of{' '}
+              <span className="font-medium text-slate-800">{animTotal}</span> remaining
+            </div>
           </div>
           <label className="inline-flex items-center gap-2 text-slate-700">
             <input type="checkbox" checked={hideChecked} onChange={(e) => setHideChecked(e.target.checked)} aria-label="Hide checked items" />
@@ -100,9 +123,17 @@ export function GroceryListView() {
           checkedNames={checkedNames}
           onToggle={(norm) => {
             toggleChecked(norm)
-            try { if (apk && 'vibrate' in navigator) (navigator as any).vibrate(10) } catch {}
+            haptic('light')
           }}
-          onRemove={(norm) => removeExtra(norm, 'standard')}
+          onRemove={(norm) => {
+            // Try to find an extra to allow undo
+            const extra = extras.find((e) => normalizeName(e.name) === norm && e.section === 'standard')
+            removeExtra(norm, 'standard')
+            haptic('medium')
+            if (extra) {
+              show({ text: `Removed ${extra.name}`, actionLabel: 'Undo', onAction: () => addExtra({ name: extra.name, section: 'standard', source: 'manual' }) })
+            }
+          }}
           canRemove={(norm) => canRemove(norm)}
         />
 
@@ -140,17 +171,24 @@ export function GroceryListView() {
         <div ref={liveRef} aria-live="polite" className="sr-only" />
       </div>
       {apk && (
-        <div className="apk-addbar">
-          <input
-            value={extraName}
-            onChange={(e) => setExtraName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExtraItem() } }}
-            className="apk-addbar-input"
-            placeholder="Add item"
-            aria-label="Add individual item (APK)"
-          />
-          <button className="apk-addbar-btn" onClick={addExtraItem} disabled={!extraName.trim()}>Add</button>
-        </div>
+        <>
+          <button className="fab tap-ripple" aria-label="Add item" onClick={() => setShowAdd((s) => !s)}>
+            <svg aria-hidden="true" viewBox="0 0 20 20" className="w-6 h-6 fill-current"><path d="M9 0h2v9h9v2h-9v9H9v-9H0V9h9V0Z"/></svg>
+          </button>
+          <div className={showAdd ? 'sheet open' : 'sheet'} role="dialog" aria-label="Add item">
+            <div className="flex items-center gap-2">
+              <input
+                value={extraName}
+                onChange={(e) => setExtraName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExtraItem(); setShowAdd(false) } }}
+                className="input flex-1"
+                placeholder="Add item"
+                aria-label="Add individual item"
+              />
+              <button className="btn-primary" onClick={() => { addExtraItem(); setShowAdd(false); haptic('medium') }} disabled={!extraName.trim()}>Add</button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )
@@ -174,11 +212,16 @@ function Items({
     <ul className="space-y-2">
       {items.map((it) => {
         const checked = checkedNames.includes(it.norm)
+        const handlers = useSwipeable({
+          onSwipedLeft: () => { if (canRemove(it.norm)) onRemove(it.norm) },
+          onSwipedRight: () => onToggle(it.norm),
+          preventScrollOnSwipe: true,
+        })
         return (
           <li key={it.norm} className={
             'flex items-center justify-between gap-3 card px-3 py-2 transition-shadow ' +
             (checked ? 'opacity-80' : 'hover:shadow-md')
-          }>
+          } {...handlers}>
             <label className="flex items-center gap-2 min-w-0 cursor-pointer">
               <input
                 type="checkbox"
