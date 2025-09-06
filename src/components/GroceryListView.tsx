@@ -17,6 +17,7 @@ export function GroceryListView() {
 
   const agg = useMemo(() => aggregateUnified(recipes, selectedRecipeIds, extras), [recipes, selectedRecipeIds, extras])
   const [extraName, setExtraName] = useState('')
+  const [hideChecked, setHideChecked] = useState(false)
   const addExtraItem = () => {
     const n = normalizeName(extraName)
     if (!n) return
@@ -43,6 +44,12 @@ export function GroceryListView() {
 
   const canRemove = (norm: string) => extras.some((e) => normalizeName(e.name) === norm && e.section === 'standard')
 
+  const checkedSet = new Set(checkedNames)
+  const remaining = agg.filter((i) => !checkedSet.has(i.norm))
+  const completed = agg.filter((i) => checkedSet.has(i.norm))
+  const totalCount = agg.length
+  const remainingCount = remaining.length
+
   return (
     <div className="space-y-4">
       <section>
@@ -61,23 +68,54 @@ export function GroceryListView() {
             placeholder="Add item (standard)"
             aria-label="Add individual item"
           />
-          <button className="px-3 py-2 rounded bg-emerald-600 text-white" onClick={addExtraItem}>Add</button>
+          <button
+            className="px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50"
+            onClick={addExtraItem}
+            disabled={!extraName.trim()}
+          >
+            Add
+          </button>
         </div>
       </section>
 
       <section>
         <h2 className="font-medium mb-2">Grocery list</h2>
+        <div className="flex items-center justify-between mb-2 text-sm">
+          <div className="text-slate-600">
+            <span className="font-medium text-slate-800">{remainingCount}</span> of <span className="font-medium text-slate-800">{totalCount}</span> remaining
+          </div>
+          <label className="inline-flex items-center gap-2 text-slate-700">
+            <input type="checkbox" checked={hideChecked} onChange={(e) => setHideChecked(e.target.checked)} aria-label="Hide checked items" />
+            <span>Hide checked</span>
+          </label>
+        </div>
+
         <Items
-          items={agg}
+          items={hideChecked ? remaining : agg}
           checkedNames={checkedNames}
           onToggle={toggleChecked}
           onRemove={(norm) => removeExtra(norm, 'standard')}
           canRemove={(norm) => canRemove(norm)}
         />
+
+        {hideChecked && completed.length > 0 && (
+          <details className="mt-3">
+            <summary className="cursor-pointer text-sm text-slate-700">Completed ({completed.length})</summary>
+            <div className="mt-2">
+              <Items
+                items={completed}
+                checkedNames={checkedNames}
+                onToggle={toggleChecked}
+                onRemove={(norm) => removeExtra(norm, 'standard')}
+                canRemove={(norm) => canRemove(norm)}
+              />
+            </div>
+          </details>
+        )}
       </section>
 
       <div className="flex items-center gap-2">
-        <button className="px-3 py-2 rounded border" onClick={clearChecks}>Clear checks</button>
+        <button className="px-3 py-2 rounded border hover:bg-slate-50 active:bg-slate-100" onClick={clearChecks}>Clear checks</button>
         <div ref={liveRef} aria-live="polite" className="sr-only" />
       </div>
     </div>
@@ -103,28 +141,66 @@ function Items({
       {items.map((it) => {
         const checked = checkedNames.includes(it.norm)
         return (
-          <li key={it.norm} className="flex items-center justify-between gap-3 bg-white border rounded px-3 py-2">
-            <label className="flex items-center gap-2 min-w-0">
-              <input type="checkbox" checked={checked} onChange={() => onToggle(it.norm)} aria-label={`Check ${it.name}`} />
+          <li key={it.norm} className={
+            'flex items-center justify-between gap-3 bg-white border rounded px-3 py-2 ' +
+            (checked ? 'opacity-80' : '')
+          }>
+            <label className="flex items-center gap-2 min-w-0 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => onToggle(it.norm)}
+                aria-label={`Check ${it.name}`}
+              />
               <span className={checked ? 'line-through text-slate-500 truncate' : 'truncate'} title={`${it.name} x ${it.count}`}>
                 {it.name} x {it.count}
               </span>
             </label>
             <div className="flex items-center gap-2">
               <div className="flex flex-wrap gap-1 justify-end">
-                {it.sources.standard && <span className="text-[10px] px-1 py-0.5 rounded bg-slate-100 border">Standard</span>}
-                {it.sources.special && <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 border">Special</span>}
-                {it.sources.fromFavourite && <span className="text-[10px] px-1 py-0.5 rounded bg-emerald-100 border">Favourite</span>}
-                {it.sources.recipeNames.map((n) => (
-                  <span key={n} className="text-[10px] px-1 py-0.5 rounded bg-blue-100 border">{n}</span>
-                ))}
+                {it.sources.standard && (
+                  <span className="text-[12px] px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-800">Standard</span>
+                )}
+                {it.sources.special && (
+                  <span className="text-[12px] px-1.5 py-0.5 rounded bg-amber-100 border border-amber-300 text-amber-900">Special</span>
+                )}
+                {it.sources.fromFavourite && (
+                  <span className="text-[12px] px-1.5 py-0.5 rounded bg-emerald-100 border border-emerald-300 text-emerald-900">Favourite</span>
+                )}
+                {/* Recipe origins: show up to 2, then +N with tooltip */}
+                {(() => {
+                  const names = it.sources.recipeNames
+                  const shown = names.slice(0, 2)
+                  const hidden = names.length - shown.length
+                  return (
+                    <>
+                      {shown.map((n) => (
+                        <span key={n} className="text-[12px] px-1.5 py-0.5 rounded bg-blue-100 border border-blue-300 text-blue-900" title={`From recipe: ${n}`}>
+                          {n}
+                        </span>
+                      ))}
+                      {hidden > 0 && (
+                        <span
+                          className="text-[12px] px-1.5 py-0.5 rounded bg-blue-50 border border-blue-300 text-blue-900"
+                          title={names.join(', ')}
+                          aria-label={`From recipes: ${names.join(', ')}`}
+                        >
+                          +{hidden} recipes
+                        </span>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
               {canRemove(it.norm) && (
                 <button
-                  className="px-2 py-1 rounded border border-red-300 text-red-700"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded border border-red-300 text-red-700 hover:bg-red-50 active:bg-red-100"
                   onClick={() => onRemove(it.norm)}
                   aria-label={`Remove extra ${it.name}`}
-                >Remove</button>
+                >
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="w-4 h-4 fill-current"><path d="M6 2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2h4v2H0V2h6Zm2 18a2 2 0 0 1-2-2V6h12v12a2 2 0 0 1-2 2H8Zm2-10h2v8h-2v-8Zm6 0h-2v8h2v-8ZM8 10H6v8h2v-8Z"/></svg>
+                  Remove
+                </button>
               )}
             </div>
           </li>

@@ -19,7 +19,7 @@ export function NavTabs({
                 className={
                   'inline-flex items-center rounded-md px-3 py-1.5 text-sm border ' +
                   (active
-                    ? 'bg-blue-50 border-blue-300 text-blue-800'
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                     : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50')
                 }
                 aria-current={active ? 'page' : undefined}
@@ -33,4 +33,3 @@ export function NavTabs({
     </nav>
   )
 }
-

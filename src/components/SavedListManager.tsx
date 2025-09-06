@@ -16,7 +16,7 @@ export function SavedListManager() {
           aria-label="Saved list name"
         />
         <button
-          className="px-3 py-2 rounded bg-blue-600 text-white"
+          className="px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50"
           onClick={() => {
             if (!name.trim()) return
             const id = saveCurrentAs(name.trim())
@@ -40,10 +40,10 @@ export function SavedListManager() {
                   <div className="text-xs text-slate-500">{new Date(l.updatedAt).toLocaleString()}</div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="px-2 py-1 rounded border" onClick={() => loadSavedList(l.id)} aria-current={currentListId === l.id ? 'true' : undefined}>
+                  <button className="px-2 py-1 rounded border hover:bg-slate-50 active:bg-slate-100" onClick={() => loadSavedList(l.id)} aria-current={currentListId === l.id ? 'true' : undefined}>
                     Load
                   </button>
-                  <button className="px-2 py-1 rounded border border-red-300 text-red-700" onClick={() => {
+                  <button className="px-2 py-1 rounded border border-red-300 text-red-700 hover:bg-red-50 active:bg-red-100" onClick={() => {
                     if (confirm('Delete this saved list?')) deleteSavedList(l.id)
                   }}>Delete</button>
                 </div>
@@ -55,4 +55,3 @@ export function SavedListManager() {
     </div>
   )
 }
-

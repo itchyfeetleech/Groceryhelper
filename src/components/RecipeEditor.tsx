@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { normalizeName } from '../utils/normalization'
 import type { Recipe } from '../types'
+import { IngredientChips } from './IngredientChips'
 
 type Props = {
   value: Recipe
@@ -109,7 +110,7 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
           />
         </div>
         <div className="mt-2">
-          <Chips
+          <IngredientChips
             items={standard}
             onDelete={(i) => removeAt('standard', i)}
             onMoveUp={(i) => moveUp('standard', i)}
@@ -132,7 +133,7 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
           />
         </div>
         <div className="mt-2">
-          <Chips
+          <IngredientChips
             items={special}
             onDelete={(i) => removeAt('special', i)}
             onMoveUp={(i) => moveUp('special', i)}
@@ -146,7 +147,7 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
       )}
 
       <div className="flex gap-2">
-        <button type="submit" className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Save</button>
+        <button type="submit" className="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50">Save</button>
       </div>
     </form>
   )

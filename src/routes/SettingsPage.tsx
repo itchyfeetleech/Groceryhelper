@@ -47,7 +47,7 @@ export function SettingsPage() {
       <section className="space-y-2">
         <h2 className="font-medium">Backup</h2>
         <div className="flex gap-2 items-center">
-          <button className="px-3 py-2 rounded border" onClick={doExport}>Export JSON</button>
+          <button className="px-3 py-2 rounded border hover:bg-slate-50 active:bg-slate-100" onClick={doExport}>Export JSON</button>
           <input ref={fileRef} type="file" accept="application/json" onChange={onImportFile} aria-label="Import JSON file" />
         </div>
         <textarea
@@ -57,10 +57,9 @@ export function SettingsPage() {
           placeholder="Backup JSON appears here after export. Paste here to import."
         />
         <div>
-          <button className="px-3 py-2 rounded border" onClick={onImportText}>Import from text</button>
+          <button className="px-3 py-2 rounded border hover:bg-slate-50 active:bg-slate-100" onClick={onImportText}>Import from text</button>
         </div>
       </section>
     </div>
   )
 }
-

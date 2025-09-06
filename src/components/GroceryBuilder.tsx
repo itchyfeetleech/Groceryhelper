@@ -82,7 +82,7 @@ export function GroceryBuilder() {
             <option value="standard">Standard</option>
             <option value="special">Special</option>
           </select>
-          <button className="px-3 py-2 rounded bg-emerald-600 text-white" onClick={addExtraItem}>Add</button>
+          <button className="px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50" onClick={addExtraItem} disabled={!extraName.trim()}>Add</button>
         </div>
         <div className="mt-2 text-sm text-slate-600">
           <p>Extras aggregate with recipe items. No duplicates per section.</p>

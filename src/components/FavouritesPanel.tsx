@@ -48,7 +48,7 @@ export function FavouritesPanel() {
                   <span className="text-xs">This week</span>
                 </label>
                 <button
-                  className="px-2 py-1 rounded border border-red-300 text-red-700"
+                  className="px-2 py-1 rounded border border-red-300 text-red-700 hover:bg-red-50 active:bg-red-100"
                   onClick={() => removeFavourite(norm, 'standard')}
                   aria-label={`Remove favourite ${f.name}`}
                 >
@@ -79,7 +79,9 @@ export function FavouritesPanel() {
           placeholder="Add favourite item (always standard)"
           aria-label="Favourite item name"
         />
-        <button className="px-3 py-2 rounded bg-emerald-600 text-white" onClick={addFav}>Add Favourite</button>
+        <button className="px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50" onClick={addFav} disabled={!favName.trim()}>
+          Add Favourite
+        </button>
       </div>
       <div className="mt-3">
         <h3 className="font-medium mb-1">Saved favourites</h3>
