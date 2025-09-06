@@ -8,7 +8,7 @@ import { ProgressRing } from '../ui/ProgressRing'
 import { useToast } from '../ui/Toast'
 import { haptic } from '../utils/haptics'
 import { useSwipeable } from 'react-swipeable'
-import { FixedSizeList as List } from 'react-window'
+// react-window is dynamically imported in virtualized branch to avoid build export issues
 
 export function GroceryListView() {
   const apk = useIsApk()
@@ -212,7 +212,7 @@ function Items({
   useEffect(() => { if (items.length > 120) setEverVirtual(true) }, [items.length])
   const shouldVirtualize = everVirtual
   if (shouldVirtualize) {
-    const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+    const Row = ({ index, style }: { index: number; style: any }) => {
       const it = items[index]
       const checked = checkedNames.includes(it.norm)
       const handlers = useSwipeable({
@@ -265,7 +265,10 @@ function Items({
               </div>
               {canRemove(it.norm) && (
                 <button className="btn-icon btn-icon-danger" onClick={() => onRemove(it.norm)} aria-label={`Remove extra ${it.name}`} title={`Remove ${it.name}`}>
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="w-4 h-4 fill-current"><path d="M6 2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2h4v2H0V2h6Zm2 18a2 2 0 0 1-2-2V6h12v12a2 2 0 0 1-2 2H8Zm2-10h2v8h-2v-8Zm6 0h-2v8h2v-8ZM8 10H6v8h2v-8Z"/></svg>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 7h12M9 7l1-2h4l1 2M8 7v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7"/>
+                    <path d="M10 11v6M14 11v6"/>
+                  </svg>
                   <span className="sr-only">Remove</span>
                 </button>
               )}
@@ -277,11 +280,64 @@ function Items({
     // Use a safe height to avoid layout thrash; fixed item size generous to prevent clipping of badges
     const height = Math.max(320, Math.min(680, Math.round(window.innerHeight * 0.7)))
     const itemSize = 68
+    const [VListMod, setVListMod] = useState<any>(null)
+    useEffect(() => {
+      let mounted = true
+      import('react-window')
+        .then((m) => { if (mounted) setVListMod((m as any).FixedSizeList || (m as any).default?.FixedSizeList) })
+        .catch(() => { if (mounted) setVListMod(null) })
+      return () => { mounted = false }
+    }, [])
+    if (!VListMod) {
+      // Fallback to simple list until module loads
+      return (
+        <ul className="space-y-2" aria-label="Grocery items">
+          {items.map((it) => {
+            const checked = checkedNames.includes(it.norm)
+            const handlers = useSwipeable({
+              onSwipedLeft: () => { if (canRemove(it.norm)) onRemove(it.norm) },
+              onSwipedRight: () => onToggle(it.norm),
+              preventScrollOnSwipe: false,
+              delta: 35,
+              trackTouch: true,
+              touchEventOptions: { passive: true },
+            })
+            return (
+              <li key={it.norm} className={'flex items-center justify-between gap-3 card px-3 py-2 transition-shadow ' + (checked ? 'opacity-80' : 'hover:shadow-md')} {...handlers}>
+                <label className="flex items-center gap-2 min-w-0 cursor-pointer">
+                  <input type="checkbox" checked={checked} onChange={() => onToggle(it.norm)} aria-label={`Check ${it.name}`} />
+                  <span className={checked ? 'line-through text-slate-500 truncate' : 'truncate'} title={`${it.name} x ${it.count}`}>
+                    {it.name} x {it.count}
+                  </span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap gap-1 justify-end">
+                    {it.sources.standard && (<span className="text-[12px] px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-800">Standard</span>)}
+                    {it.sources.special && (<span className="text-[12px] px-1.5 py-0.5 rounded bg-amber-100 border border-amber-300 text-amber-900">Special</span>)}
+                    {it.sources.fromFavourite && (<span className="text-[12px] px-1.5 py-0.5 rounded bg-emerald-100 border border-emerald-300 text-emerald-900">Favourite</span>)}
+                  </div>
+                  {canRemove(it.norm) && (
+                    <button className="btn-icon btn-icon-danger" onClick={() => onRemove(it.norm)} aria-label={`Remove extra ${it.name}`} title={`Remove ${it.name}`}>
+                      <svg aria-hidden="true" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 7h12M9 7l1-2h4l1 2M8 7v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7"/>
+                        <path d="M10 11v6M14 11v6"/>
+                      </svg>
+                      <span className="sr-only">Remove</span>
+                    </button>
+                  )}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )
+    }
+    const VList = VListMod
     return (
       <div role="list" aria-label="Grocery items (virtualized)">
-        <List height={height} itemCount={items.length} itemSize={itemSize} width={'100%'} overscanCount={6}>
+        <VList height={height} itemCount={items.length} itemSize={itemSize} width={'100%'} overscanCount={6}>
           {Row as any}
-        </List>
+        </VList>
       </div>
     )
   }
@@ -351,13 +407,11 @@ function Items({
                 })()}
               </div>
               {canRemove(it.norm) && (
-                <button
-                  className="btn-icon btn-icon-danger"
-                  onClick={() => onRemove(it.norm)}
-                  aria-label={`Remove extra ${it.name}`}
-                  title={`Remove ${it.name}`}
-                >
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="w-4 h-4 fill-current"><path d="M6 2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2h4v2H0V2h6Zm2 18a2 2 0 0 1-2-2V6h12v12a2 2 0 0 1-2 2H8Zm2-10h2v8h-2v-8Zm6 0h-2v8h2v-8ZM8 10H6v8h2v-8Z"/></svg>
+                <button className="btn-icon btn-icon-danger" onClick={() => onRemove(it.norm)} aria-label={`Remove extra ${it.name}`} title={`Remove ${it.name}`}>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 7h12M9 7l1-2h4l1 2M8 7v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7"/>
+                    <path d="M10 11v6M14 11v6"/>
+                  </svg>
                   <span className="sr-only">Remove</span>
                 </button>
               )}
