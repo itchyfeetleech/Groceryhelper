@@ -1,0 +1,24 @@
+{
+  "packageId": "com.itchyfeetleech.groceryhelper",
+  "host": "itchyfeetleech.github.io",
+  "name": "GroceryHelper",
+  "launcherName": "GroceryHelper",
+  "display": "standalone",
+  "themeColor": "#0f172a",
+  "navigationColor": "#0f172a",
+  "backgroundColor": "#0f172a",
+  "enableNotifications": false,
+  "startUrl": "/Groceryhelper/",
+  "iconUrl": "https://via.placeholder.com/512.png?text=GroceryHelper",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersionCode": 1,
+  "appVersion": "1",
+  "generatorApp": "bubblewrap-cli",
+  "fallbackType": "webview",
+  "orientation": "portrait"
+}
+
