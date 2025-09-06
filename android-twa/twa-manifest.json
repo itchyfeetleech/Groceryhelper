@@ -10,6 +10,7 @@
   "enableNotifications": false,
   "startUrl": "/Groceryhelper/",
   "iconUrl": "https://raw.githubusercontent.com/itchyfeetleech/Groceryhelper/android-apk/public/icons/app-icon-512.png",
+  "maskableIconUrl": "https://raw.githubusercontent.com/itchyfeetleech/Groceryhelper/android-apk/public/icons/app-icon-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./android.keystore",
