@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../state/store'
 import { aggregateUnified } from '../utils/aggregate'
 import { normalizeName } from '../utils/normalization'
+import { useIsApk } from '../utils/apk'
 
 export function GroceryListView() {
+  const apk = useIsApk()
   const {
     recipes,
     selectedRecipeIds,
@@ -53,31 +55,33 @@ export function GroceryListView() {
 
   return (
     <div className="space-y-4">
-      <section>
-        <h2 className="font-medium mb-2">Add individual item</h2>
-        <div className="flex gap-2">
-          <input
-            value={extraName}
-            onChange={(e) => setExtraName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                addExtraItem()
-              }
-            }}
-            className="flex-1 border rounded px-3 py-2"
-            placeholder="Add item (standard)"
-            aria-label="Add individual item"
-          />
-          <button
-            className="px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50"
-            onClick={addExtraItem}
-            disabled={!extraName.trim()}
-          >
-            Add
-          </button>
-        </div>
-      </section>
+      {!apk && (
+        <section>
+          <h2 className="font-medium mb-2">Add individual item</h2>
+          <div className="flex gap-2">
+            <input
+              value={extraName}
+              onChange={(e) => setExtraName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addExtraItem()
+                }
+              }}
+              className="flex-1 border rounded px-3 py-2"
+              placeholder="Add item (standard)"
+              aria-label="Add individual item"
+            />
+            <button
+              className="px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50"
+              onClick={addExtraItem}
+              disabled={!extraName.trim()}
+            >
+              Add
+            </button>
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="font-medium mb-2">Grocery list</h2>
@@ -94,7 +98,10 @@ export function GroceryListView() {
         <Items
           items={hideChecked ? remaining : agg}
           checkedNames={checkedNames}
-          onToggle={toggleChecked}
+          onToggle={(norm) => {
+            toggleChecked(norm)
+            try { if (apk && 'vibrate' in navigator) (navigator as any).vibrate(10) } catch {}
+          }}
           onRemove={(norm) => removeExtra(norm, 'standard')}
           canRemove={(norm) => canRemove(norm)}
         />
@@ -106,7 +113,10 @@ export function GroceryListView() {
               <Items
                 items={completed}
                 checkedNames={checkedNames}
-                onToggle={toggleChecked}
+                onToggle={(norm) => {
+                  toggleChecked(norm)
+                  try { if (apk && 'vibrate' in navigator) (navigator as any).vibrate(10) } catch {}
+                }}
                 onRemove={(norm) => removeExtra(norm, 'standard')}
                 canRemove={(norm) => canRemove(norm)}
               />
@@ -129,6 +139,19 @@ export function GroceryListView() {
         </button>
         <div ref={liveRef} aria-live="polite" className="sr-only" />
       </div>
+      {apk && (
+        <div className="apk-addbar">
+          <input
+            value={extraName}
+            onChange={(e) => setExtraName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExtraItem() } }}
+            className="apk-addbar-input"
+            placeholder="Add item"
+            aria-label="Add individual item (APK)"
+          />
+          <button className="apk-addbar-btn" onClick={addExtraItem} disabled={!extraName.trim()}>Add</button>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,0 +1,158 @@
+name: Build Android APK (TWA)
+
+on:
+  push:
+    branches: [ android-apk ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Bubblewrap CLI
+        run: npm i -g @bubblewrap/cli
+
+      - name: Detect release signing config
+        id: detect
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}" ] && \
+             [ -n "${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}" ] && \
+             [ -n "${{ secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD }}" ] && \
+             [ -n "${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}" ]; then
+            echo "HAS_RELEASE=true" >> $GITHUB_ENV
+          else
+            echo "HAS_RELEASE=false" >> $GITHUB_ENV
+          fi
+
+      - name: Configure Bubblewrap (JDK & Android SDK)
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.bubblewrap"
+          cat > "$HOME/.bubblewrap/config.json" << JSON
+          { "jdkPath": "$JAVA_HOME", "androidSdkPath": "$ANDROID_SDK_ROOT" }
+          JSON
+
+      - name: Generate/Update Android project from TWA manifest
+        shell: bash
+        run: |
+          npx @bubblewrap/cli update \
+            --skipVersionUpgrade \
+            --directory android-twa \
+            --manifest android-twa/twa-manifest.json
+
+      - name: Override adaptive icon background color
+        shell: bash
+        run: |
+          # Ensure res directories exist
+          mkdir -p android-twa/app/src/main/res/values
+          mkdir -p android-twa/app/src/main/res/mipmap-anydpi-v26
+          mkdir -p android-twa/app/src/main/res/xml
+          # Copy overrides into the generated project
+          cp -f android-twa/overrides/res/values/colors.xml android-twa/app/src/main/res/values/colors.xml
+          cp -f android-twa/overrides/res/xml/shortcuts.xml android-twa/app/src/main/res/xml/shortcuts.xml
+          # If an ic_launcher.xml exists, update its background reference; else, add ours
+          if [ -f android-twa/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml ]; then
+            sed -i -E 's|(\<background[^>]*android:drawable=")([^"]+)(".*)|\1@color/ic_launcher_background\3|' android-twa/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          else
+            cp -f android-twa/overrides/res/mipmap-anydpi-v26/ic_launcher.xml android-twa/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          fi
+
+      - name: Prepare release keystore
+        if: env.HAS_RELEASE == 'true'
+        shell: bash
+        run: |
+          echo "Decoding release keystore into android-twa/android.keystore"
+          echo "${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android-twa/android.keystore
+
+      - name: Build signed release (Bubblewrap)
+        if: env.HAS_RELEASE == 'true'
+        shell: bash
+        working-directory: android-twa
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew || true
+          npx @bubblewrap/cli build \
+            --manifest twa-manifest.json \
+            --signingKeyPath android.keystore \
+            --signingKeyAlias "${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}"
+
+      - name: Compute SHA256 and cert fingerprint (release)
+        if: env.HAS_RELEASE == 'true'
+        shell: bash
+        env:
+          STOREPASS: ${{ secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD }}
+          ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+        run: |
+          cd android-twa
+          sha256sum app-release-signed.apk > app-release-signed.sha256
+          keytool -list -v -keystore android.keystore -alias "$ALIAS" -storepass "$STOREPASS" \
+            | sed -n 's/^\s*SHA256: \(.*\)$/\1/p' > signing-cert-sha256.txt || true
+
+      - name: Build debug APK
+        if: env.HAS_RELEASE != 'true'
+        working-directory: android-twa
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK artifact (release)
+        if: env.HAS_RELEASE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: groceryhelper-release-apk
+          path: android-twa/app-release-signed.apk
+
+      - name: Upload AAB artifact (release)
+        if: env.HAS_RELEASE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: groceryhelper-release-aab
+          path: android-twa/app-release-bundle.aab
+
+      - name: Upload release hashes
+        if: env.HAS_RELEASE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: groceryhelper-release-hashes
+          path: |
+            android-twa/app-release-signed.sha256
+            android-twa/signing-cert-sha256.txt
+
+      - name: Upload APK artifact (debug)
+        if: env.HAS_RELEASE != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: groceryhelper-debug-apk
+          path: android-twa/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload debug hash
+        if: env.HAS_RELEASE != 'true'
+        shell: bash
+        run: |
+          cd android-twa
+          sha256sum app/build/outputs/apk/debug/app-debug.apk > app-debug.sha256
+        
+      - name: Upload debug hashes artifact
+        if: env.HAS_RELEASE != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: groceryhelper-debug-hash
+          path: android-twa/app-debug.sha256
