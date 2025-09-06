@@ -13,6 +13,11 @@ html, body {
   touch-action: pan-y;
 }
 
+/* Subtle modern look */
+body {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
 /* Simple focus style */
 :focus-visible {
   outline: 2px solid #3b82f6;
@@ -21,6 +26,14 @@ html, body {
 
 /* container helper */
 .container { @apply max-w-4xl mx-auto px-4; }
+
+/* Primitives */
+.btn { @apply inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed; }
+.btn-primary { @apply inline-flex items-center justify-center rounded-md border border-transparent bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed; }
+.btn-danger { @apply inline-flex items-center justify-center rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 active:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed; }
+.input { @apply w-full border border-slate-300 rounded-md px-3 py-2 text-[15px] focus-visible:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400; }
+.card { @apply bg-white border border-slate-200 rounded-lg shadow-sm; }
+.muted { @apply text-slate-500; }
 
 /* APK-only helpers */
 .apk body {
@@ -38,7 +51,9 @@ html, body {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   padding: 6px calc(env(safe-area-inset-right, 0) + 8px) calc(env(safe-area-inset-bottom, 0) + 6px) calc(env(safe-area-inset-left, 0) + 8px);
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.96);
+  -webkit-backdrop-filter: saturate(180%) blur(8px);
+  backdrop-filter: saturate(180%) blur(8px);
   border-top: 1px solid #e5e7eb;
   z-index: 40;
 }

@@ -68,12 +68,12 @@ export function GroceryListView() {
                   addExtraItem()
                 }
               }}
-              className="flex-1 border rounded px-3 py-2"
+              className="flex-1 input"
               placeholder="Add item (standard)"
               aria-label="Add individual item"
             />
             <button
-              className="px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50"
+              className="btn-primary"
               onClick={addExtraItem}
               disabled={!extraName.trim()}
             >
@@ -126,9 +126,9 @@ export function GroceryListView() {
       </section>
 
       <div className="flex items-center gap-2">
-        <button className="px-3 py-2 rounded border hover:bg-slate-50 active:bg-slate-100" onClick={clearChecks}>Clear checks</button>
+        <button className="btn" onClick={clearChecks}>Clear checks</button>
         <button
-          className="px-3 py-2 rounded border border-red-300 text-red-700 hover:bg-red-50 active:bg-red-100"
+          className="btn-danger"
           onClick={() => {
             if (confirm('Clear the current list? This removes selected recipes, extras, and checks.')) {
               clearCurrentList()
@@ -176,8 +176,8 @@ function Items({
         const checked = checkedNames.includes(it.norm)
         return (
           <li key={it.norm} className={
-            'flex items-center justify-between gap-3 bg-white border rounded px-3 py-2 ' +
-            (checked ? 'opacity-80' : '')
+            'flex items-center justify-between gap-3 card px-3 py-2 transition-shadow ' +
+            (checked ? 'opacity-80' : 'hover:shadow-md')
           }>
             <label className="flex items-center gap-2 min-w-0 cursor-pointer">
               <input

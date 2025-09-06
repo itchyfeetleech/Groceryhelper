@@ -17,10 +17,10 @@ export function NavTabs({
               <Link
                 to={t.to}
                 className={
-                  'inline-flex items-center rounded-md px-3 py-1.5 text-sm border ' +
+                  'inline-flex items-center rounded-lg px-3 py-1.5 text-sm border shadow-sm transition-colors ' +
                   (active
-                    ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                    : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50')
+                    ? 'bg-emerald-600 border-emerald-600 text-white'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50')
                 }
                 aria-current={active ? 'page' : undefined}
               >
