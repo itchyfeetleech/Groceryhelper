@@ -30,22 +30,20 @@ export function App() {
   }, [])
   return (
     <div className={apk ? 'min-h-screen apk-root' : 'min-h-screen'}>
-      {!apk && (
-        <header className="border-b bg-white/80 backdrop-blur sticky top-0 z-20">
-          <div className="container py-3 flex items-center gap-4">
-            <Link to="/recipes" className="font-semibold text-lg">Recipe & Grocery Aggregator</Link>
-            <NavTabs
-              tabs={[
-                { to: '/recipes', label: 'Recipes' },
-                { to: '/items', label: 'Items' },
-                { to: '/groceries', label: 'Grocery list' },
-                { to: '/settings', label: 'Settings' }
-              ]}
-              activePath={location.pathname}
-            />
-          </div>
-        </header>
-      )}
+      <header className="app-header border-b bg-white/80 backdrop-blur sticky top-0 z-20 hidden md:block">
+        <div className="container py-3 flex items-center gap-4">
+          <Link to="/recipes" className="font-semibold text-lg">Recipe & Grocery Aggregator</Link>
+          <NavTabs
+            tabs={[
+              { to: '/recipes', label: 'Recipes' },
+              { to: '/items', label: 'Items' },
+              { to: '/groceries', label: 'Grocery list' },
+              { to: '/settings', label: 'Settings' }
+            ]}
+            activePath={location.pathname}
+          />
+        </div>
+      </header>
       <main className={apk ? 'container py-3 has-bottom-nav' : 'container py-4'}>
         <Outlet />
       </main>

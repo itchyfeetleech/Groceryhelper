@@ -69,6 +69,9 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Always hide the large header in APK */
+.apk .app-header { display: none !important; }
+
 /* Sticky add bar for groceries on APK */
 .apk .apk-addbar {
   position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0) + 54px);
