@@ -37,7 +37,7 @@ html, body {
 .apk-bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  padding: 6px 8px calc(env(safe-area-inset-bottom, 0) + 6px);
+  padding: 6px calc(env(safe-area-inset-right, 0) + 8px) calc(env(safe-area-inset-bottom, 0) + 6px) calc(env(safe-area-inset-left, 0) + 8px);
   background: #ffffff;
   border-top: 1px solid #e5e7eb;
   z-index: 40;
