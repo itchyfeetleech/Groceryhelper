@@ -8,6 +8,7 @@ import { ProgressRing } from '../ui/ProgressRing'
 import { useToast } from '../ui/Toast'
 import { haptic } from '../utils/haptics'
 import { useSwipeable } from 'react-swipeable'
+import { FixedSizeList as List } from 'react-window'
 
 export function GroceryListView() {
   const apk = useIsApk()
@@ -208,6 +209,82 @@ function Items({
   canRemove: (norm: string) => boolean
 }) {
   if (items.length === 0) return <p className="text-sm text-slate-500">No items.</p>
+  const shouldVirtualize = items.length > 120
+  if (shouldVirtualize) {
+    const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+      const it = items[index]
+      const checked = checkedNames.includes(it.norm)
+      const handlers = useSwipeable({
+        onSwipedLeft: () => { if (canRemove(it.norm)) onRemove(it.norm) },
+        onSwipedRight: () => onToggle(it.norm),
+        preventScrollOnSwipe: false,
+        delta: 35,
+        trackTouch: true,
+        touchEventOptions: { passive: true },
+      })
+      return (
+        <div style={style} {...handlers}>
+          <div className={'flex items-center justify-between gap-3 card px-3 py-2 mx-0.5 my-1 transition-shadow ' + (checked ? 'opacity-80' : 'hover:shadow-md')}>
+            <label className="flex items-center gap-2 min-w-0 cursor-pointer">
+              <input type="checkbox" checked={checked} onChange={() => onToggle(it.norm)} aria-label={`Check ${it.name}`} />
+              <span className={checked ? 'line-through text-slate-500 truncate' : 'truncate'} title={`${it.name} x ${it.count}`}>
+                {it.name} x {it.count}
+              </span>
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex flex-wrap gap-1 justify-end">
+                {it.sources.standard && (
+                  <span className="text-[12px] px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-800">Standard</span>
+                )}
+                {it.sources.special && (
+                  <span className="text-[12px] px-1.5 py-0.5 rounded bg-amber-100 border border-amber-300 text-amber-900">Special</span>
+                )}
+                {it.sources.fromFavourite && (
+                  <span className="text-[12px] px-1.5 py-0.5 rounded bg-emerald-100 border border-emerald-300 text-emerald-900">Favourite</span>
+                )}
+                {(() => {
+                  const names = it.sources.recipeNames
+                  const shown = names.slice(0, 2)
+                  const hidden = names.length - shown.length
+                  return (
+                    <>
+                      {shown.map((n) => (
+                        <span key={n} className="text-[12px] px-1.5 py-0.5 rounded bg-blue-100 border border-blue-300 text-blue-900" title={`From recipe: ${n}`}>
+                          {n}
+                        </span>
+                      ))}
+                      {hidden > 0 && (
+                        <span className="text-[12px] px-1.5 py-0.5 rounded bg-blue-50 border border-blue-300 text-blue-900" title={names.join(', ')} aria-label={`From recipes: ${names.join(', ')}`}>
+                          +{hidden} recipes
+                        </span>
+                      )}
+                    </>
+                  )
+                })()}
+              </div>
+              {canRemove(it.norm) && (
+                <button className="btn-icon btn-icon-danger" onClick={() => onRemove(it.norm)} aria-label={`Remove extra ${it.name}`} title={`Remove ${it.name}`}>
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="w-4 h-4 fill-current"><path d="M6 2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2h4v2H0V2h6Zm2 18a2 2 0 0 1-2-2V6h12v12a2 2 0 0 1-2 2H8Zm2-10h2v8h-2v-8Zm6 0h-2v8h2v-8ZM8 10H6v8h2v-8Z"/></svg>
+                  <span className="sr-only">Remove</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )
+    }
+    // Use a safe height to avoid layout thrash; fixed item size generous to prevent clipping of badges
+    const height = Math.max(320, Math.min(680, Math.round(window.innerHeight * 0.7)))
+    const itemSize = 68
+    return (
+      <div role="list" aria-label="Grocery items (virtualized)">
+        <List height={height} itemCount={items.length} itemSize={itemSize} width={'100%'} overscanCount={6}>
+          {Row as any}
+        </List>
+      </div>
+    )
+  }
+
   return (
     <ul className="space-y-2">
       {items.map((it) => {
