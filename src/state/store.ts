@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { ExtraItem, Recipe, SavedList, StorageSchema } from '../types'
 import { loadStorage, saveStorage } from '../utils/storage'
+import { queueRemoteSave, bumpLocalUpdatedAt } from '../sync'
 import { normalizeName } from '../utils/normalization'
 import { uid } from '../utils/id'
 
@@ -194,5 +195,8 @@ export const useStore = create<StoreState>((set, get) => ({
 
 function persist() {
   const s = useStore.getState()
-  saveStorage({ schemaVersion: 1, recipes: s.recipes, savedLists: s.savedLists, favourites: s.favourites })
+  const data = { schemaVersion: 1 as const, recipes: s.recipes, savedLists: s.savedLists, favourites: s.favourites }
+  bumpLocalUpdatedAt()
+  saveStorage(data)
+  queueRemoteSave(data)
 }

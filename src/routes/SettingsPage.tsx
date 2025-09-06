@@ -1,10 +1,26 @@
 import { useRef, useState } from 'react'
+import { useEffect, useState as useReactState } from 'react'
+import { useSyncAuth, signOutSync } from '../sync'
 import { useStore } from '../state/store'
 
 export function SettingsPage() {
   const { exportJSON, importJSON } = useStore()
   const [exportText, setExportText] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+  const [syncEnabled, setSyncEnabled] = useReactState(false)
+  const [userId, setUserId] = useReactState<string | null>(null)
+
+  useEffect(() => {
+    const { enabled, user } = useSyncAuth()
+    setSyncEnabled(enabled)
+    setUserId(user?.uid ?? null)
+    const i = setInterval(() => {
+      const { enabled, user } = useSyncAuth()
+      setSyncEnabled(enabled)
+      setUserId(user?.uid ?? null)
+    }, 1000)
+    return () => clearInterval(i)
+  }, [])
 
   const doExport = () => {
     const txt = exportJSON()
@@ -44,6 +60,17 @@ export function SettingsPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Settings</h1>
+      <section className="space-y-2">
+        <h2 className="font-medium">Sync</h2>
+        {syncEnabled ? (
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-slate-700">Signed in {userId ? `as ${userId.slice(0,8)}…` : '(initializing)'} via Anonymous Auth</div>
+            <button className="px-3 py-2 rounded border hover:bg-slate-50 active:bg-slate-100" onClick={signOutSync}>Sign out</button>
+          </div>
+        ) : (
+          <div className="text-sm text-slate-500">Sync not configured. Set Vite env vars for Firebase and rebuild.</div>
+        )}
+      </section>
       <section className="space-y-2">
         <h2 className="font-medium">Backup</h2>
         <div className="flex gap-2 items-center">
