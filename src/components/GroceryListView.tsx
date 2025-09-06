@@ -11,6 +11,7 @@ export function GroceryListView() {
     checkedNames,
     toggleChecked,
     clearChecks,
+    clearCurrentList,
     removeExtra,
     addExtra,
   } = useStore()
@@ -116,6 +117,16 @@ export function GroceryListView() {
 
       <div className="flex items-center gap-2">
         <button className="px-3 py-2 rounded border hover:bg-slate-50 active:bg-slate-100" onClick={clearChecks}>Clear checks</button>
+        <button
+          className="px-3 py-2 rounded border border-red-300 text-red-700 hover:bg-red-50 active:bg-red-100"
+          onClick={() => {
+            if (confirm('Clear the current list? This removes selected recipes, extras, and checks.')) {
+              clearCurrentList()
+            }
+          }}
+        >
+          Clear list
+        </button>
         <div ref={liveRef} aria-live="polite" className="sr-only" />
       </div>
     </div>

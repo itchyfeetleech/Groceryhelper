@@ -26,6 +26,8 @@ type StoreState = {
   removeExtra: (normName: string, section: 'standard' | 'special') => void
   toggleChecked: (normName: string) => void
   clearChecks: () => void
+  // Clear current in-progress grocery list (not saved lists)
+  clearCurrentList: () => void
 
   // Favourites
   addFavourite: (item: ExtraItem) => void
@@ -103,6 +105,10 @@ export const useStore = create<StoreState>((set, get) => ({
     }))
   },
   clearChecks: () => set({ checkedNames: [] }),
+
+  clearCurrentList: () => {
+    set({ selectedRecipeIds: [], extras: [], checkedNames: [], currentListId: undefined })
+  },
 
   addFavourite: (item) => {
     const norm = normalizeName(item.name)
