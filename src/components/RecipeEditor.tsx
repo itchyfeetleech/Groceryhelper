@@ -101,13 +101,15 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
         <div className="flex gap-2 mt-1">
           <input
             ref={stdInput}
-            placeholder="Add ingredient and press Enter"
+            placeholder="Add ingredient"
             className="flex-1 input"
+            enterKeyHint="done"
             onKeyDown={(e) => {
               if (e.key === 'Enter') { e.preventDefault(); handleAddStandard() }
             }}
             aria-label="Add standard ingredient"
           />
+          <button type="button" className="btn-primary" onClick={handleAddStandard} aria-label="Add standard ingredient">Add</button>
         </div>
         <div className="mt-2">
           <IngredientChips
@@ -124,13 +126,15 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
         <div className="flex gap-2 mt-1">
           <input
             ref={spcInput}
-            placeholder="Add ingredient and press Enter"
+            placeholder="Add ingredient"
             className="flex-1 input"
+            enterKeyHint="done"
             onKeyDown={(e) => {
               if (e.key === 'Enter') { e.preventDefault(); handleAddSpecial() }
             }}
             aria-label="Add special ingredient"
           />
+          <button type="button" className="btn-primary" onClick={handleAddSpecial} aria-label="Add special ingredient">Add</button>
         </div>
         <div className="mt-2">
           <IngredientChips
