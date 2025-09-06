@@ -20,7 +20,8 @@ export function initFirebaseSync(params: InitParams) {
   onAuthStateChanged(fb.auth, async (user) => {
     currentUser = user
     if (!user) {
-      await signInAnonymously(fb.auth!)
+      // Try anonymous sign-in; if disabled in console, ignore and allow Google sign-in from UI
+      try { await signInAnonymously(fb.auth!) } catch {}
       return
     }
 

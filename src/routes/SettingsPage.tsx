@@ -77,14 +77,14 @@ export function SettingsPage() {
             <div className="text-sm text-slate-700">
               {userId ? (
                 isAnonymous ? (
-                  <>Signed in anonymously (temporary). You can upgrade to Google.</>
+                  <>Signed in anonymously. You can sign in with Google.</>
                 ) : (
                   <>Signed in as <span className="font-medium">{userLabel}</span> via Google</>
                 )
-              ) : 'Initializing...'}
+              ) : 'Not signed in.'}
             </div>
             <div className="flex items-center gap-2">
-              {isAnonymous && (
+              {(!userId || isAnonymous) && (
                 <button
                   className="px-3 py-2 rounded border hover:bg-slate-50 active:bg-slate-100"
                   onClick={() => void signInWithGoogle()}
@@ -92,7 +92,9 @@ export function SettingsPage() {
                   Sign in with Google
                 </button>
               )}
-              <button className="px-3 py-2 rounded border hover:bg-slate-50 active:bg-slate-100" onClick={signOutSync}>Sign out</button>
+              {userId && (
+                <button className="px-3 py-2 rounded border hover:bg-slate-50 active:bg-slate-100" onClick={signOutSync}>Sign out</button>
+              )}
             </div>
           </div>
         ) : (
@@ -118,4 +120,3 @@ export function SettingsPage() {
     </div>
   )
 }
-
