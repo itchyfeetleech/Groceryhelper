@@ -29,6 +29,19 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm i -g @bubblewrap/cli
 
+      - name: Detect release signing config
+        id: detect
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}" ] && \
+             [ -n "${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}" ] && \
+             [ -n "${{ secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD }}" ] && \
+             [ -n "${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}" ]; then
+            echo "HAS_RELEASE=true" >> $GITHUB_ENV
+          else
+            echo "HAS_RELEASE=false" >> $GITHUB_ENV
+          fi
+
       - name: Configure Bubblewrap (JDK & Android SDK)
         shell: bash
         run: |
@@ -45,11 +58,47 @@ jobs:
             --directory android-twa \
             --manifest android-twa/twa-manifest.json
 
+      - name: Prepare release keystore
+        if: env.HAS_RELEASE == 'true'
+        shell: bash
+        run: |
+          echo "Decoding release keystore into android-twa/android.keystore"
+          echo "${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android-twa/android.keystore
+
+      - name: Build signed release (Bubblewrap)
+        if: env.HAS_RELEASE == 'true'
+        shell: bash
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+        run: |
+          npx @bubblewrap/cli build \
+            --directory android-twa \
+            --manifest android-twa/twa-manifest.json \
+            --signingKeyPath android-twa/android.keystore \
+            --signingKeyAlias "${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}"
+
       - name: Build debug APK
+        if: env.HAS_RELEASE != 'true'
         working-directory: android-twa
         run: ./gradlew assembleDebug
 
-      - name: Upload APK artifact
+      - name: Upload APK artifact (release)
+        if: env.HAS_RELEASE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: groceryhelper-release-apk
+          path: android-twa/app-release-signed.apk
+
+      - name: Upload AAB artifact (release)
+        if: env.HAS_RELEASE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: groceryhelper-release-aab
+          path: android-twa/app-release-bundle.aab
+
+      - name: Upload APK artifact (debug)
+        if: env.HAS_RELEASE != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: groceryhelper-debug-apk
