@@ -68,11 +68,12 @@ export function GroceryListView() {
     if (!virtualize && totalCount > 120) setVirtualize(true)
   }, [totalCount, virtualize])
 
-  // Celebrate when finished
+  // Celebrate when finished (avoid full-screen canvas on APK to prevent Android overlay glitches)
   useEffect(() => {
     if (apk && totalCount > 0 && remainingCount === 0) {
       haptic('heavy')
-      import('canvas-confetti').then((m) => m.default({ particleCount: 60, spread: 60, origin: { y: 0.8 } })).catch(() => {})
+      // Lightweight toast instead of confetti on APK
+      show({ text: 'All done! 🎉' })
     }
   }, [apk, totalCount, remainingCount])
 
