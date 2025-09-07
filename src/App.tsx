@@ -13,6 +13,7 @@ export function App() {
   const location = useLocation()
   const getLocal = useStore((s) => ({ recipes: s.recipes, savedLists: s.savedLists, favourites: s.favourites }))
   const apk = useIsApk()
+  const [updateAvailable, setUpdateAvailable] = useState(false)
 
   useEffect(() => {
     // Detect APK (TWA) and annotate document
@@ -29,6 +30,28 @@ export function App() {
         saveStorage(data)
       },
     })
+  }, [])
+
+  // Poll for new deployed version and prompt to refresh
+  useEffect(() => {
+    let cancelled = false
+    const check = async () => {
+      try {
+        const base = (import.meta as any).env.BASE_URL || '/'
+        const url = base.replace(/\/$/, '/') + 'version.txt?ts=' + Date.now()
+        const res = await fetch(url, { cache: 'no-store' })
+        if (!res.ok) return
+        const txt = (await res.text()).trim()
+        if (txt && typeof __APP_VERSION__ !== 'undefined' && txt !== __APP_VERSION__) {
+          if (!cancelled) setUpdateAvailable(true)
+        }
+      } catch {}
+    }
+    check()
+    const id = setInterval(check, 60_000)
+    const onVis = () => { if (document.visibilityState === 'visible') check() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => { cancelled = true; clearInterval(id); document.removeEventListener('visibilitychange', onVis) }
   }, [])
   const navigate = useNavigate()
   const routes = useMemo(() => ['/recipes', '/items', '/groceries', '/settings'], [])
@@ -69,6 +92,16 @@ export function App() {
           </div>
         </header>
         <main className={apk ? 'container py-3 has-bottom-nav' : 'container py-4'}>
+          {updateAvailable && (
+            <div className="card p-3 mb-3 flex items-center justify-between" role="status" aria-live="polite">
+              <div className="text-sm">
+                New version available. Current: {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'}
+              </div>
+              <button className="btn-primary" onClick={() => window.location.reload()}>
+                Reload
+              </button>
+            </div>
+          )}
           <Outlet />
         </main>
         {apk && <BottomNav activePath={location.pathname} />}
