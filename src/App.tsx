@@ -97,8 +97,15 @@ export function App() {
               <div className="text-sm">
                 New version available. Current: {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'}
               </div>
-              <button className="btn-primary" onClick={() => window.location.reload()}>
-                Reload
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  const base = (import.meta as any).env.BASE_URL || '/'
+                  const root = (base.startsWith('/') ? base : '/' + base).replace(/\/+$/, '/')
+                  window.location.assign(root)
+                }}
+              >
+                Update
               </button>
             </div>
           )}
