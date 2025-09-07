@@ -78,33 +78,33 @@ export function GroceryListView() {
 
   return (
     <div className="space-y-4">
-      {!apk && (
-        <section>
-          <h2 className="font-medium mb-2">Add individual item</h2>
-          <div className="flex gap-2">
-            <input
-              value={extraName}
-              onChange={(e) => setExtraName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  addExtraItem()
-                }
-              }}
-              className="flex-1 input"
-              placeholder="Add item (standard)"
-              aria-label="Add individual item"
-            />
-            <button
-              className="btn-primary"
-              onClick={addExtraItem}
-              disabled={!extraName.trim()}
-            >
-              Add
-            </button>
-          </div>
-        </section>
-      )}
+      <section>
+        <h2 className="font-medium mb-2">Add individual item</h2>
+        <div className="flex gap-2">
+          <input
+            value={extraName}
+            onChange={(e) => setExtraName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addExtraItem()
+                if (apk) haptic('medium')
+              }
+            }}
+            className="flex-1 input"
+            placeholder="Add item (standard)"
+            aria-label="Add individual item"
+            enterKeyHint="done"
+          />
+          <button
+            className="btn-primary"
+            onClick={() => { addExtraItem(); if (apk) haptic('medium') }}
+            disabled={!extraName.trim()}
+          >
+            Add
+          </button>
+        </div>
+      </section>
 
       <section>
         <h2 className="font-medium mb-2 hidden md:block">Grocery list</h2>
@@ -140,6 +140,7 @@ export function GroceryListView() {
             }
           }}
           canRemove={(norm) => canRemove(norm)}
+          apk={apk}
         />
 
         {hideChecked && completed.length > 0 && (
@@ -155,6 +156,7 @@ export function GroceryListView() {
                 }}
                 onRemove={(norm) => removeExtra(norm, 'standard')}
                 canRemove={(norm) => canRemove(norm)}
+                apk={apk}
               />
             </div>
           </details>
@@ -175,20 +177,7 @@ export function GroceryListView() {
         </button>
         <div ref={liveRef} aria-live="polite" className="sr-only" />
       </div>
-      {apk && (
-        <div className="apk-addbar" role="form" aria-label="Add item">
-          <input
-            value={extraName}
-            onChange={(e) => setExtraName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExtraItem(); haptic('medium') } }}
-            className="apk-addbar-input"
-            placeholder="Add item"
-            aria-label="Add individual item"
-            enterKeyHint="done"
-          />
-          <button className="apk-addbar-btn" onClick={() => { addExtraItem(); haptic('medium') }} disabled={!extraName.trim()}>Add</button>
-        </div>
-      )}
+      {/* Bottom add bar removed for APK to simplify and avoid overlay issues */}
     </div>
   )
 }
@@ -199,18 +188,21 @@ function Items({
   onToggle,
   onRemove,
   canRemove,
+  apk,
 }: {
   items: { norm: string; name: string; count: number; sources: { standard: boolean; special: boolean; fromFavourite: boolean; recipeNames: string[] } }[]
   checkedNames: string[]
   onToggle: (norm: string) => void
   onRemove: (norm: string) => void
   canRemove: (norm: string) => boolean
+  apk: boolean
 }) {
   if (items.length === 0) return <p className="text-sm text-slate-500">No items.</p>
   // Stabilize virtualization to avoid toggling around the threshold
   const [everVirtual, setEverVirtual] = useState(items.length > 120)
   useEffect(() => { if (items.length > 120) setEverVirtual(true) }, [items.length])
-  const shouldVirtualize = everVirtual
+  // Disable virtualization in APK mode to ensure native scrolling works well in TWA
+  const shouldVirtualize = !apk && everVirtual
   if (shouldVirtualize) {
     const Row = ({ index, style }: { index: number; style: any }) => {
       const it = items[index]
