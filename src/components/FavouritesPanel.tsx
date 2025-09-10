@@ -24,7 +24,7 @@ export function FavouritesPanel() {
   const renderList = () => {
     if (list.length === 0) return <p className="text-sm text-slate-500">None</p>
     return (
-      <ul className="divide-y card max-h-60 overflow-auto">
+      <ul className="divide-y card">
         {list.map((f, i) => {
           const norm = normalizeName(f.name)
           const key = `standard:${norm}`
