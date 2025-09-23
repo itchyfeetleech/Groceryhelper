@@ -21,13 +21,14 @@ export function App() {
     initFirebaseSync({
       getLocalData: () => ({ schemaVersion: 1, ...getLocal }),
       onRemoteData: (data) => {
-        // Apply remote to store without re-uploading immediately
-        ;(useStore as any).setState({
-          recipes: data.recipes ?? [],
-          savedLists: data.savedLists ?? [],
-          favourites: (data.favourites ?? []).map((f) => ({ name: f.name, section: 'standard' as const })),
+        useStore.getState().hydrateFromExternal(data)
+        const state = useStore.getState()
+        saveStorage({
+          schemaVersion: 1,
+          recipes: state.recipes,
+          savedLists: state.savedLists,
+          favourites: state.favourites,
         })
-        saveStorage(data)
       },
     })
   }, [])

@@ -4,6 +4,8 @@ import { useStore } from '../state/store'
 export function SavedListManager() {
   const { savedLists, saveCurrentAs, loadSavedList, deleteSavedList, currentListId } = useStore()
   const [name, setName] = useState('')
+  const autoList = savedLists.find((l) => l.auto)
+  const manualLists = savedLists.filter((l) => !l.auto)
 
   return (
     <div className="space-y-3">
@@ -27,13 +29,24 @@ export function SavedListManager() {
         </button>
       </div>
 
+      {autoList && (
+        <div className="card p-3 text-sm text-slate-600">
+          <div className="font-medium text-slate-800">Progress auto-saved</div>
+          <div className="mt-1">{autoList.name}</div>
+          <div className="text-xs text-slate-500 mt-1">
+            Last updated {new Date(autoList.updatedAt).toLocaleString()}. Your current list will resume automatically when you
+            return.
+          </div>
+        </div>
+      )}
+
       <div>
         <h3 className="font-medium mb-1">Saved lists</h3>
-        {savedLists.length === 0 ? (
+        {manualLists.length === 0 ? (
           <p className="text-sm text-slate-500">None yet.</p>
         ) : (
           <ul className="divide-y card">
-            {savedLists.map((l) => (
+            {manualLists.map((l) => (
               <li key={l.id} className="p-2 flex items-center justify-between">
                 <div>
                   <div className="font-medium">{l.name}</div>

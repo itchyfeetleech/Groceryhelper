@@ -21,6 +21,7 @@ export type SavedList = {
   createdAt: string
   updatedAt: string
   schemaVersion: 1
+  auto?: boolean
 }
 
 export type StorageSchemaV1 = {
