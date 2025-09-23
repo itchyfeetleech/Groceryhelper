@@ -17,6 +17,7 @@ export function GroceryListView() {
     selectedRecipeIds,
     extras,
     checkedNames,
+    replaceCheckedNames,
     toggleChecked,
     clearChecks,
     clearCurrentList,
@@ -45,11 +46,13 @@ export function GroceryListView() {
   useEffect(() => {
     const available = new Set(agg.map((i) => i.norm))
     const pruned = checkedNames.filter((n) => available.has(n))
-    if (pruned.length !== checkedNames.length) {
-      // Update silently
-      ;(useStore as any).setState({ checkedNames: pruned })
+    if (
+      pruned.length !== checkedNames.length ||
+      pruned.some((n, idx) => n !== checkedNames[idx])
+    ) {
+      replaceCheckedNames(pruned)
     }
-  }, [agg])
+  }, [agg, checkedNames, replaceCheckedNames])
 
   const canRemove = (norm: string) => extras.some((e) => normalizeName(e.name) === norm && e.section === 'standard')
 
