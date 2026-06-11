@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest'
-import { aggregate } from '../aggregate'
+import { aggregate, aggregateUnified } from '../aggregate'
 import type { ExtraItem, Recipe } from '../../types'
 
 const makeRecipe = (id: string, title: string, std: string[], spc: string[]): Recipe => ({
@@ -33,6 +33,16 @@ test('Extras aggregate', () => {
   const extras: ExtraItem[] = [{ name: 'flour', section: 'standard' }]
   const result = aggregate([A], ['A'], extras)
   expect(result.standard.find((i) => i.norm === 'flour')?.count).toBe(2)
+})
+
+test('Unified aggregation attaches categories by normalized name', () => {
+  const A = makeRecipe('A', 'A', ['Flour'], [])
+  const extras: ExtraItem[] = [{ name: 'milk', section: 'standard' }]
+  const items = aggregateUnified([A], ['A'], extras, { flour: 'Pantry', milk: 'Dairy & Eggs' })
+  expect(items.find((i) => i.norm === 'flour')?.category).toBe('Pantry')
+  expect(items.find((i) => i.norm === 'milk')?.category).toBe('Dairy & Eggs')
+  const without = aggregateUnified([A], ['A'], extras)
+  expect(without.find((i) => i.norm === 'flour')?.category).toBeUndefined()
 })
 
 test('Saved list recompute scenario', () => {

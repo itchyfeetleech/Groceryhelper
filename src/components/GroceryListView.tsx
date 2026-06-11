@@ -3,6 +3,8 @@ import { List, type RowComponentProps } from 'react-window'
 import { useSwipeable } from 'react-swipeable'
 import { useStore } from '../state/store'
 import { aggregateUnified, type AggregatedUnifiedItem } from '../utils/aggregate'
+import { groupByCategory } from '../utils/categories'
+import { CategorySelect } from './CategorySelect'
 import { normalizeName } from '../utils/normalization'
 import { useIsApk } from '../utils/apk'
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber'
@@ -12,6 +14,7 @@ import { haptic } from '../utils/haptics'
 
 const VIRTUALIZE_THRESHOLD = 120
 const VIRTUAL_ROW_HEIGHT = 68
+const GROUP_BY_AISLE_KEY = 'groupByAisle'
 
 export function GroceryListView() {
   const apk = useIsApk()
@@ -20,6 +23,8 @@ export function GroceryListView() {
     selectedRecipeIds,
     extras,
     checkedNames,
+    categories,
+    setItemCategory,
     replaceCheckedNames,
     toggleChecked,
     clearChecks,
@@ -29,9 +34,25 @@ export function GroceryListView() {
   } = useStore()
   const { show } = useToast()
 
-  const agg = useMemo(() => aggregateUnified(recipes, selectedRecipeIds, extras), [recipes, selectedRecipeIds, extras])
+  const agg = useMemo(
+    () => aggregateUnified(recipes, selectedRecipeIds, extras, categories),
+    [recipes, selectedRecipeIds, extras, categories],
+  )
   const [extraName, setExtraName] = useState('')
   const [hideChecked, setHideChecked] = useState(false)
+  const [groupByAisle, setGroupByAisle] = useState(() => {
+    try {
+      return localStorage.getItem(GROUP_BY_AISLE_KEY) !== '0'
+    } catch {
+      return true
+    }
+  })
+  const toggleGroupByAisle = (on: boolean) => {
+    setGroupByAisle(on)
+    try {
+      localStorage.setItem(GROUP_BY_AISLE_KEY, on ? '1' : '0')
+    } catch {}
+  }
 
   const addExtraItem = () => {
     const norm = normalizeName(extraName)
@@ -106,7 +127,11 @@ export function GroceryListView() {
     }
   }
 
+  const onSetCategory = (norm: string, category: string | null) => setItemCategory(norm, category)
+
   const listEmpty = selectedRecipeIds.length === 0 && extras.length === 0
+  const anyCategorized = agg.some((i) => i.category)
+  const visibleItems = hideChecked ? remaining : agg
 
   return (
     <div className="space-y-4">
@@ -144,31 +169,64 @@ export function GroceryListView() {
                 <span className="font-medium text-slate-800">{animTotal}</span> remaining
               </div>
             </div>
-            <label className="inline-flex items-center gap-2 text-slate-700">
-              <input
-                type="checkbox"
-                checked={hideChecked}
-                onChange={(e) => setHideChecked(e.target.checked)}
-                aria-label="Hide checked items"
-              />
-              <span>Hide checked</span>
-            </label>
+            <div className="flex items-center gap-4">
+              <label className="inline-flex items-center gap-2 text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={groupByAisle}
+                  onChange={(e) => toggleGroupByAisle(e.target.checked)}
+                  aria-label="Group by aisle"
+                />
+                <span>Group by aisle</span>
+              </label>
+              <label className="inline-flex items-center gap-2 text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={hideChecked}
+                  onChange={(e) => setHideChecked(e.target.checked)}
+                  aria-label="Hide checked items"
+                />
+                <span>Hide checked</span>
+              </label>
+            </div>
           </div>
         )}
+        {groupByAisle && totalCount > 0 && !anyCategorized && (
+          <p className="text-xs text-slate-500 mb-2">
+            Tip: tap the &ldquo;No aisle&rdquo; tag on an item to organize the list by store aisle.
+          </p>
+        )}
 
-        <Items
-          items={hideChecked ? remaining : agg}
-          emptyText={
-            listEmpty
-              ? 'Nothing here yet. Pick recipes for the week or add items above.'
-              : 'All items are checked off and hidden.'
-          }
-          checkedNames={checkedNames}
-          onToggle={onToggle}
-          onRemove={onRemove}
-          canRemove={canRemove}
-          apk={apk}
-        />
+        {groupByAisle && anyCategorized ? (
+          <GroupedItems
+            items={visibleItems}
+            emptyText={
+              listEmpty
+                ? 'Nothing here yet. Pick recipes for the week or add items above.'
+                : 'All items are checked off and hidden.'
+            }
+            checkedNames={checkedNames}
+            onToggle={onToggle}
+            onRemove={onRemove}
+            canRemove={canRemove}
+            onSetCategory={onSetCategory}
+          />
+        ) : (
+          <Items
+            items={visibleItems}
+            emptyText={
+              listEmpty
+                ? 'Nothing here yet. Pick recipes for the week or add items above.'
+                : 'All items are checked off and hidden.'
+            }
+            checkedNames={checkedNames}
+            onToggle={onToggle}
+            onRemove={onRemove}
+            canRemove={canRemove}
+            onSetCategory={onSetCategory}
+            allowVirtualize={!apk}
+          />
+        )}
 
         {hideChecked && completed.length > 0 && (
           <details className="mt-3">
@@ -181,7 +239,8 @@ export function GroceryListView() {
                 onToggle={onToggle}
                 onRemove={onRemove}
                 canRemove={canRemove}
-                apk={apk}
+                onSetCategory={onSetCategory}
+                allowVirtualize={!apk}
               />
             </div>
           </details>
@@ -214,6 +273,44 @@ type ItemCallbacks = {
   onToggle: (norm: string) => void
   onRemove: (norm: string) => void
   canRemove: (norm: string) => boolean
+  onSetCategory: (norm: string, category: string | null) => void
+}
+
+function GroupedItems({
+  items,
+  emptyText,
+  ...callbacks
+}: ItemCallbacks & {
+  items: AggregatedUnifiedItem[]
+  emptyText: string
+}) {
+  if (items.length === 0) return <p className="text-sm text-slate-500">{emptyText}</p>
+  const groups = groupByCategory(items)
+  return (
+    <div>
+      {groups.map((g) => (
+        <section key={g.category ?? '__none'} className="mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+            {g.category ?? 'No aisle'} <span className="font-normal">({g.items.length})</span>
+          </h3>
+          <ul className="space-y-2" aria-label={`${g.category ?? 'No aisle'} items`}>
+            {g.items.map((it) => (
+              <li key={it.norm}>
+                <ItemCard
+                  item={it}
+                  checked={callbacks.checkedNames.includes(it.norm)}
+                  onToggle={callbacks.onToggle}
+                  onRemove={callbacks.onRemove}
+                  removable={callbacks.canRemove(it.norm)}
+                  onSetCategory={callbacks.onSetCategory}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  )
 }
 
 function Items({
@@ -223,11 +320,12 @@ function Items({
   onToggle,
   onRemove,
   canRemove,
-  apk,
+  onSetCategory,
+  allowVirtualize,
 }: ItemCallbacks & {
   items: AggregatedUnifiedItem[]
   emptyText: string
-  apk: boolean
+  allowVirtualize: boolean
 }) {
   // Once virtualized, stay virtualized to avoid flip-flopping around the threshold
   const [everVirtual, setEverVirtual] = useState(items.length > VIRTUALIZE_THRESHOLD)
@@ -238,7 +336,7 @@ function Items({
   if (items.length === 0) return <p className="text-sm text-slate-500">{emptyText}</p>
 
   // Virtualization is disabled in APK mode so native scrolling works well in the TWA
-  if (!apk && everVirtual) {
+  if (allowVirtualize && everVirtual) {
     return (
       <VirtualizedItems
         items={items}
@@ -246,6 +344,7 @@ function Items({
         onToggle={onToggle}
         onRemove={onRemove}
         canRemove={canRemove}
+        onSetCategory={onSetCategory}
       />
     )
   }
@@ -260,6 +359,7 @@ function Items({
             onToggle={onToggle}
             onRemove={onRemove}
             removable={canRemove(it.norm)}
+            onSetCategory={onSetCategory}
           />
         </li>
       ))}
@@ -277,6 +377,7 @@ function VirtualRow({
   onToggle,
   onRemove,
   canRemove,
+  onSetCategory,
 }: RowComponentProps<VirtualRowProps>) {
   const it = items[index]
   if (!it) return null
@@ -288,6 +389,7 @@ function VirtualRow({
         onToggle={onToggle}
         onRemove={onRemove}
         removable={canRemove(it.norm)}
+        onSetCategory={onSetCategory}
       />
     </div>
   )
@@ -315,12 +417,14 @@ function ItemCard({
   onToggle,
   onRemove,
   removable,
+  onSetCategory,
 }: {
   item: AggregatedUnifiedItem
   checked: boolean
   onToggle: (norm: string) => void
   onRemove: (norm: string) => void
   removable: boolean
+  onSetCategory: (norm: string, category: string | null) => void
 }) {
   const handlers = useSwipeable({
     onSwipedLeft: () => {
@@ -337,18 +441,19 @@ function ItemCard({
     <div
       {...handlers}
       className={
-        'flex items-center justify-between gap-3 card px-3 py-2 transition-shadow ' +
+        'flex items-center justify-between flex-wrap gap-x-3 gap-y-1 card px-3 py-2 transition-shadow ' +
         (checked ? 'opacity-80' : 'hover:shadow-md')
       }
     >
-      <label className="flex items-center gap-2 min-w-0 cursor-pointer">
+      <label className="flex items-center gap-2 min-w-0 flex-1 basis-40 cursor-pointer">
         <input type="checkbox" checked={checked} onChange={() => onToggle(it.norm)} aria-label={`Check ${it.name}`} />
         <span className={checked ? 'line-through text-slate-500 truncate' : 'truncate'} title={label}>
           {label}
         </span>
       </label>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 ml-auto">
         <SourceBadges sources={it.sources} />
+        <CategorySelect value={it.category} onChange={(c) => onSetCategory(it.norm, c)} itemName={it.name} />
         {removable && (
           <button
             className="btn-icon btn-icon-danger"

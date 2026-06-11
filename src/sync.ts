@@ -173,6 +173,7 @@ function normalizeRemote(r: any): StorageSchema {
     recipes: Array.isArray(r?.recipes) ? r.recipes : [],
     savedLists: Array.isArray(r?.savedLists) ? r.savedLists : [],
     favourites: Array.isArray(r?.favourites) ? r.favourites : [],
+    categories: r?.categories && typeof r.categories === 'object' && !Array.isArray(r.categories) ? r.categories : {},
   }
 }
 

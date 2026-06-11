@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../state/store'
 import { normalizeName } from '../utils/normalization'
 import { useToast } from '../ui/Toast'
+import { CategorySelect } from './CategorySelect'
 
 export function FavouritesPanel() {
-  const { favourites, extras, addFavourite, removeFavourite, addExtra, removeExtra } = useStore()
+  const { favourites, extras, addFavourite, removeFavourite, addExtra, removeExtra, categories, setItemCategory } =
+    useStore()
   const { show } = useToast()
   const [favName, setFavName] = useState('')
 
@@ -42,6 +44,11 @@ export function FavouritesPanel() {
                 <span>{f.name}</span>
               </div>
               <div className="flex items-center gap-2">
+                <CategorySelect
+                  value={categories[norm]}
+                  onChange={(c) => setItemCategory(norm, c)}
+                  itemName={f.name}
+                />
                 <label className="inline-flex items-center gap-2">
                   <input
                     type="checkbox"

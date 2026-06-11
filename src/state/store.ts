@@ -11,6 +11,8 @@ type StoreState = {
   recipes: Recipe[]
   savedLists: SavedList[]
   favourites: ExtraItem[]
+  /** Normalized item name -> store aisle */
+  categories: Record<string, string>
 
   // Current groceries builder state (not persisted separately; goes into saved list)
   selectedRecipeIds: string[]
@@ -36,6 +38,9 @@ type StoreState = {
   // Favourites
   addFavourite: (item: ExtraItem) => void
   removeFavourite: (normName: string, section: 'standard' | 'special') => void
+
+  // Aisle categories
+  setItemCategory: (normName: string, category: string | null) => void
 
   // Saved lists
   saveCurrentAs: (name: string) => string
@@ -90,6 +95,16 @@ function prepareSavedLists(lists: SavedList[] | undefined): { savedLists: SavedL
   return { savedLists, autoList: latestAuto }
 }
 
+function sanitizeCategories(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  const out: Record<string, string> = {}
+  for (const [key, cat] of Object.entries(value as Record<string, unknown>)) {
+    const norm = normalizeName(key)
+    if (norm && typeof cat === 'string' && cat) out[norm] = cat
+  }
+  return out
+}
+
 function normalizeCheckedNamesList(names: string[]): string[] {
   const normalized: string[] = []
   for (const raw of names ?? []) {
@@ -139,6 +154,7 @@ export const useStore = create<StoreState>((set, get) => {
       recipes: data.recipes ?? [],
       savedLists,
       favourites: (data.favourites ?? []).map((f) => ({ name: f.name, section: 'standard' as const })),
+      categories: sanitizeCategories(data.categories),
       selectedRecipeIds: autoList ? [...autoList.recipeIds] : [],
       extras: autoList ? autoList.extras.map((e) => ({ ...e })) : [],
       checkedNames: autoList ? normalizeCheckedNamesList(autoList.checkedNames) : [],
@@ -150,6 +166,7 @@ export const useStore = create<StoreState>((set, get) => {
     recipes: persisted.recipes,
     savedLists: prepared.savedLists,
     favourites: (persisted.favourites ?? []).map((f) => ({ name: f.name, section: 'standard' as const })),
+    categories: sanitizeCategories(persisted.categories),
     selectedRecipeIds: prepared.autoList ? [...prepared.autoList.recipeIds] : [],
     extras: prepared.autoList ? prepared.autoList.extras.map((e) => ({ ...e })) : [],
     checkedNames: prepared.autoList ? normalizeCheckedNamesList(prepared.autoList.checkedNames) : [],
@@ -258,6 +275,20 @@ export const useStore = create<StoreState>((set, get) => {
       persist()
     },
 
+    setItemCategory: (normName, category) => {
+      const norm = normalizeName(normName)
+      if (!norm) return
+      const current = get().categories[norm]
+      if ((current ?? null) === (category ?? null)) return
+      set((s) => {
+        const next = { ...s.categories }
+        if (category) next[norm] = category
+        else delete next[norm]
+        return { categories: next }
+      })
+      persist()
+    },
+
     saveCurrentAs: (name) => {
       const now = new Date().toISOString()
       const state = get()
@@ -312,6 +343,7 @@ export const useStore = create<StoreState>((set, get) => {
         recipes: get().recipes,
         savedLists: get().savedLists,
         favourites: get().favourites,
+        categories: get().categories,
       }
       return JSON.stringify(data, null, 2)
     },
@@ -328,7 +360,13 @@ export const useStore = create<StoreState>((set, get) => {
 
 function persist() {
   const s = useStore.getState()
-  const data = { schemaVersion: 1 as const, recipes: s.recipes, savedLists: s.savedLists, favourites: s.favourites }
+  const data = {
+    schemaVersion: 1 as const,
+    recipes: s.recipes,
+    savedLists: s.savedLists,
+    favourites: s.favourites,
+    categories: s.categories,
+  }
   bumpLocalUpdatedAt()
   saveStorage(data)
   queueRemoteSave(data)

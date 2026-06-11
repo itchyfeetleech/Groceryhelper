@@ -74,6 +74,28 @@ body {
 .card { @apply rounded-lg shadow-sm; background: var(--surface); border: 1px solid var(--border); }
 .muted { color: var(--muted); }
 
+/* Aisle picker rendered as a small chip */
+.category-select {
+  appearance: none;
+  -webkit-appearance: none;
+  font-size: 12px;
+  line-height: 1.25;
+  padding: 2px 8px;
+  border-radius: 0.25rem;
+  border: 1px dashed #cbd5e1;
+  background: #fff;
+  color: var(--muted);
+  max-width: 7.5rem;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.category-select-set {
+  border-style: solid;
+  border-color: var(--accent-300);
+  background: var(--accent-50);
+  color: var(--accent-800);
+}
+
 /* Tabs */
 .tab-idle { background: #fff; border-color: var(--border); color: var(--text); }
 .tab-idle:hover { background: #fff1e6; }

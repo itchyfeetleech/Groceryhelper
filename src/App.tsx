@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { initFirebaseSync } from './sync'
 import { useStore } from './state/store'
@@ -7,9 +7,6 @@ import { NavTabs } from './components/NavTabs'
 import { BottomNav } from './components/BottomNav'
 import { detectApkAndPersist, useIsApk } from './utils/apk'
 import { ToastProvider } from './ui/Toast'
-import { useSwipeable } from 'react-swipeable'
-
-const ROUTES = ['/recipes', '/items', '/groceries', '/settings']
 
 export function App() {
   const location = useLocation()
@@ -22,7 +19,13 @@ export function App() {
     initFirebaseSync({
       getLocalData: () => {
         const s = useStore.getState()
-        return { schemaVersion: 1, recipes: s.recipes, savedLists: s.savedLists, favourites: s.favourites }
+        return {
+          schemaVersion: 1,
+          recipes: s.recipes,
+          savedLists: s.savedLists,
+          favourites: s.favourites,
+          categories: s.categories,
+        }
       },
       onRemoteData: (data) => {
         useStore.getState().hydrateFromExternal(data)
@@ -32,6 +35,7 @@ export function App() {
           recipes: state.recipes,
           savedLists: state.savedLists,
           favourites: state.favourites,
+          categories: state.categories,
         })
       },
     })
@@ -69,24 +73,6 @@ export function App() {
     }
   }, [])
 
-  const navigate = useNavigate()
-  const idx = ROUTES.findIndex((r) => location.pathname.startsWith(r))
-  const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => {
-      const next = idx >= 0 ? ROUTES[idx + 1] : undefined
-      if (apk && next) navigate(next)
-    },
-    onSwipedRight: () => {
-      const prev = idx > 0 ? ROUTES[idx - 1] : undefined
-      if (apk && prev) navigate(prev)
-    },
-    trackMouse: false,
-    preventScrollOnSwipe: false,
-    delta: 40,
-    trackTouch: true,
-    touchEventOptions: { passive: true },
-  })
-
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
     const onScroll = () => setScrolled((window.scrollY || 0) > 8)
@@ -97,7 +83,7 @@ export function App() {
 
   return (
     <ToastProvider>
-      <div className={apk ? 'min-h-screen apk-root' : 'min-h-screen'} {...(apk ? swipeHandlers : {})}>
+      <div className={apk ? 'min-h-screen apk-root' : 'min-h-screen'}>
         <header
           className={
             (scrolled ? 'shadow-sm ' : '') +

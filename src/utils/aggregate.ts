@@ -71,6 +71,8 @@ export type AggregatedUnifiedItem = {
   norm: string
   name: string
   count: number
+  /** Store aisle assigned to this item, if any */
+  category?: string
   sources: {
     standard: boolean
     special: boolean
@@ -83,6 +85,7 @@ export function aggregateUnified(
   recipes: Recipe[],
   recipeIds: string[],
   extras: ExtraItem[],
+  categories: Record<string, string> = {},
 ): AggregatedUnifiedItem[] {
   type Entry = {
     count: number
@@ -143,6 +146,7 @@ export function aggregateUnified(
       norm,
       count: e.count,
       name: chooseDisplayName(norm, e.variants.length ? e.variants : [titleCaseFromNormalized(norm)]),
+      category: categories[norm],
       sources: {
         standard: e.standard,
         special: e.special,
