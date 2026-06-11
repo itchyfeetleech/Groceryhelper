@@ -1,11 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../state/store'
+import type { Recipe } from '../types'
 import { RecipeEditor } from './RecipeEditor'
+
+function isEmptyDraft(r: Recipe | undefined): boolean {
+  return !!r && !r.title.trim() && r.standard.length === 0 && r.special.length === 0
+}
 
 export function RecipeList() {
   const { recipes, addRecipe, updateRecipe, deleteRecipe, selectedRecipeIds, setSelectedRecipeIds } = useStore()
   const [q, setQ] = useState('')
-  const [editingId, setEditingId] = useState<string | null>(null)
+  // Editor open state lives in the URL (?edit=<id>) so the Android/browser
+  // back button closes the editor instead of leaving the app.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const editingId = searchParams.get('edit')
+  const navigate = useNavigate()
   const editorRef = useRef<HTMLDivElement>(null)
 
   const filtered = useMemo(() => {
@@ -14,12 +24,38 @@ export function RecipeList() {
     return recipes.filter((r) => r.title.toLowerCase().includes(nq))
   }, [recipes, q])
 
+  const openEditor = (id: string) => {
+    // Switching between recipes replaces the entry so back always closes the editor
+    setSearchParams({ edit: id }, { replace: editingId !== null })
+  }
+
   const startNew = () => {
     const id = addRecipe({ title: '', standard: [], special: [] })
-    setEditingId(id)
+    openEditor(id)
   }
 
   const editing = recipes.find((r) => r.id === editingId) || null
+
+  // Discard drafts that were never filled in, whenever the editor closes or
+  // switches away from them (Done button, back button, or edit of another recipe).
+  const prevEditingIdRef = useRef<string | null>(editingId)
+  useEffect(() => {
+    const prevId = prevEditingIdRef.current
+    prevEditingIdRef.current = editingId
+    if (prevId && prevId !== editingId) {
+      const prev = useStore.getState().recipes.find((r) => r.id === prevId)
+      if (isEmptyDraft(prev)) deleteRecipe(prevId)
+    }
+  }, [editingId, deleteRecipe])
+  // Also clean up when leaving the page entirely (e.g. bottom-nav to another tab)
+  useEffect(() => {
+    return () => {
+      const id = prevEditingIdRef.current
+      if (!id) return
+      const r = useStore.getState().recipes.find((x) => x.id === id)
+      if (isEmptyDraft(r)) useStore.getState().deleteRecipe(id)
+    }
+  }, [])
 
   // On small screens the editor renders below the list; bring it into view
   useEffect(() => {
@@ -36,11 +72,11 @@ export function RecipeList() {
   }, [recipes, editing])
 
   const closeEditor = () => {
-    // Discard drafts that were never filled in
-    if (editing && !editing.title.trim() && editing.standard.length === 0 && editing.special.length === 0) {
-      deleteRecipe(editing.id)
-    }
-    setEditingId(null)
+    // Prefer going back so the history entry created by opening is consumed;
+    // fall back to clearing the param for direct deep links.
+    const idx = (window.history.state as { idx?: number } | null)?.idx
+    if (typeof idx === 'number' && idx > 0) navigate(-1)
+    else setSearchParams({}, { replace: true })
   }
 
   return (
@@ -93,7 +129,7 @@ export function RecipeList() {
                   </label>
                   <button
                     className="btn-icon"
-                    onClick={() => setEditingId(r.id)}
+                    onClick={() => openEditor(r.id)}
                     title="Edit recipe"
                     aria-label={`Edit ${r.title || 'recipe'}`}
                   >
@@ -116,7 +152,7 @@ export function RecipeList() {
                     className="btn-icon btn-icon-danger"
                     onClick={() => {
                       if (confirm(`Delete "${r.title || 'this recipe'}"?`)) {
-                        if (editingId === r.id) setEditingId(null)
+                        if (editingId === r.id) setSearchParams({}, { replace: true })
                         deleteRecipe(r.id)
                       }
                     }}

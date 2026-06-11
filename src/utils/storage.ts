@@ -14,12 +14,13 @@ export function loadStorage(): StorageSchema {
         recipes: parsed.recipes ?? [],
         savedLists: parsed.savedLists ?? [],
         favourites: parsed.favourites ?? [],
+        categories: parsed.categories ?? {},
       }
     }
   } catch (e) {
     console.warn('Failed to parse storage; resetting', e)
   }
-  return { schemaVersion: 1, recipes: [], savedLists: [], favourites: [] }
+  return { schemaVersion: 1, recipes: [], savedLists: [], favourites: [], categories: {} }
 }
 
 export function saveStorage(data: StorageSchema) {
@@ -28,6 +29,7 @@ export function saveStorage(data: StorageSchema) {
     recipes: data.recipes ?? [],
     savedLists: data.savedLists ?? [],
     favourites: data.favourites ?? [],
+    categories: data.categories ?? {},
   }
   localStorage.setItem(KEY, JSON.stringify(safe))
 }

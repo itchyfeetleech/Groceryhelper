@@ -29,6 +29,8 @@ export type StorageSchemaV1 = {
   recipes: Recipe[]
   savedLists: SavedList[]
   favourites?: ExtraItem[]
+  /** Normalized item name -> store aisle (see utils/categories.ts) */
+  categories?: Record<string, string>
 }
 
 export type StorageSchema = StorageSchemaV1

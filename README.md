@@ -11,6 +11,7 @@ Store recipes and generate aggregated grocery lists. 100% static web app (React 
 - Favourites: save frequently bought items and toggle them into the current week’s list with one tap.
 - Saved lists: save/load/delete named lists that store recipeIds, extras, and checked items. Recompute from latest recipes on load.
 - Check off items inline; clear checks; swipe gestures on touch (right to check, left to remove extras).
+- Aisle categories: assign items to store aisles (Produce, Dairy & Eggs, ...) and group the grocery list in walking order ("Group by aisle" toggle). Assignments are remembered per item name and sync/export with the rest of the data.
 - Virtualized list for large lists (120+ items) using react-window for smooth scrolling.
 - Optional cloud sync via Firebase (anonymous sign-in + Google sign-in), with offline persistence and conflict resolution by timestamp.
 - Import/Export JSON backup in Settings (import asks for confirmation before replacing data).
@@ -80,7 +81,7 @@ To disable sync, remove env vars and rebuild.
 
 The UI adapts when running as an Android Trusted Web Activity (or when launched with `?apk=1`):
 
-- Bottom navigation with route swipe (left/right) on touch.
+- Bottom navigation; hardware back button closes the recipe editor (editor state is URL-backed).
 - Grocery list keeps the screen awake while open (Wake Lock API where available).
 - Add-individual-item bar is simplified; completion triggers haptic feedback + confetti.
 
@@ -127,6 +128,7 @@ type StorageSchema = {
   recipes: Recipe[]
   savedLists: SavedList[]
   favourites?: ExtraItem[]
+  categories?: Record<string, string> // normalized item name -> store aisle
 }
 ```
 
@@ -163,7 +165,7 @@ Saved list behavior:
 - Unified list: source badges (Standard/Special/Favourite) appear; up to 2 recipe chips + “+N recipes”.
 - Virtualization: lists with >120 items render via react-window without visual regressions; fallback path renders normally.
 - Saved lists: load after editing recipes recomputes counts; extras persist; checked items restored by normalized name.
-- APK mode: route swipe works; screen stays awake on Groceries; completion shows haptic + confetti when all items checked.
+- APK mode: hardware back closes the recipe editor; screen stays awake on Groceries; completion shows haptic + confetti when all items checked.
 - CRUD: create, edit, delete recipes and saved lists.
 - Persistence: data remains after refresh (localStorage), and sync applies when configured.
 - Mobile layout: usable at 360px width; inputs/buttons reachable.
