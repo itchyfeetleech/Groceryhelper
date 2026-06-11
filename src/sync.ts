@@ -1,6 +1,6 @@
-import { fb } from './firebase'
-import { doc, getDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
-import { onAuthStateChanged, signInAnonymously, GoogleAuthProvider, linkWithPopup, signInWithPopup, linkWithRedirect, signInWithRedirect, type User } from 'firebase/auth'
+import { useSyncExternalStore } from 'react'
+import { getFirebase, hasFirebaseConfig } from './firebase'
+import type { User } from 'firebase/auth'
 import type { StorageSchema } from './types'
 
 let currentUser: User | null = null
@@ -9,25 +9,37 @@ let lastPushedAt: string | null = null
 let pendingData: StorageSchema | null = null
 let pushTimer: ReturnType<typeof setTimeout> | null = null
 
+const authListeners = new Set<() => void>()
+function notifyAuthListeners() {
+  for (const cb of authListeners) cb()
+}
+function setCurrentUser(user: User | null) {
+  currentUser = user
+  notifyAuthListeners()
+}
+
 type InitParams = {
   getLocalData: () => StorageSchema
   onRemoteData: (data: StorageSchema) => void
 }
 
-export function initFirebaseSync(params: InitParams) {
-  if (!fb.enabled || !fb.auth || !fb.db) return
+export async function initFirebaseSync(params: InitParams) {
+  const fb = await getFirebase()
+  if (!fb) return
+  const { onAuthStateChanged, signInAnonymously } = await import('firebase/auth')
+  const { doc, getDoc, onSnapshot, setDoc } = await import('firebase/firestore')
 
   onAuthStateChanged(fb.auth, async (user) => {
-    currentUser = user
+    setCurrentUser(user)
     if (!user) {
       // Try anonymous sign-in; if disabled in console, ignore and allow Google sign-in from UI
-      try { await signInAnonymously(fb.auth!) } catch {}
+      try { await signInAnonymously(fb.auth) } catch {}
       return
     }
 
     // Ensure subscription to user's state doc
     if (unsubscribeSnap) { unsubscribeSnap(); unsubscribeSnap = null }
-    const ref = doc(fb.db!, 'users', user.uid, 'state', 'app')
+    const ref = doc(fb.db, 'users', user.uid, 'state', 'app')
 
     // Initial hydrate decision
     try {
@@ -38,10 +50,10 @@ export function initFirebaseSync(params: InitParams) {
         await setDoc(ref, { ...local, __meta: { updatedAt: new Date().toISOString(), source: 'client' } })
         lastPushedAt = new Date().toISOString()
       } else {
-        const remote = snap.data() as any
+        const remote = snap.data() as Record<string, unknown>
         const remoteEmpty = isEmptyRemote(remote)
         const localEmpty = isEmptyLocal(local)
-        const remoteUpdatedAt = remote?.__meta?.updatedAt as string | undefined
+        const remoteUpdatedAt = (remote?.__meta as { updatedAt?: string } | undefined)?.updatedAt
         const localUpdatedAt = getLocalUpdatedAt()
 
         if (remoteEmpty && !localEmpty) {
@@ -59,14 +71,14 @@ export function initFirebaseSync(params: InitParams) {
           }
         }
       }
-    } catch (e) {
+    } catch {
       // ignore; subscription below will continue
     }
 
     unsubscribeSnap = onSnapshot(ref, (snap) => {
       if (!snap.exists()) return
-      const remote = snap.data() as any
-      const remoteUpdatedAt = remote?.__meta?.updatedAt as string | undefined
+      const remote = snap.data() as Record<string, unknown>
+      const remoteUpdatedAt = (remote?.__meta as { updatedAt?: string } | undefined)?.updatedAt
       if (remoteUpdatedAt && lastPushedAt && remoteUpdatedAt === lastPushedAt) {
         // Our own write echoed; ignore
         return
@@ -78,31 +90,52 @@ export function initFirebaseSync(params: InitParams) {
 
 // Debounced remote save; called by store persist
 export function queueRemoteSave(data: StorageSchema) {
-  if (!fb.enabled || !fb.db || !currentUser) return
+  if (!hasFirebaseConfig || !currentUser) return
   pendingData = data
   if (pushTimer) clearTimeout(pushTimer)
   pushTimer = setTimeout(async () => {
-    if (!pendingData) return
+    if (!pendingData || !currentUser) return
     const toPush = pendingData
     pendingData = null
+    const fb = await getFirebase()
+    if (!fb) return
+    const { doc, setDoc } = await import('firebase/firestore')
     const ts = new Date().toISOString()
-    const ref = doc(fb.db!, 'users', currentUser!.uid, 'state', 'app')
+    const ref = doc(fb.db, 'users', currentUser.uid, 'state', 'app')
     await setDoc(ref, { ...toPush, __meta: { updatedAt: ts, source: 'client' } })
     lastPushedAt = ts
   }, 400)
 }
 
-export function useSyncAuth() {
-  // Lightweight signal via browser APIs; consumers can re-render on storage changes
-  return { enabled: !!fb.enabled, user: currentUser }
+export const syncEnabled = hasFirebaseConfig
+
+function subscribeAuth(cb: () => void) {
+  authListeners.add(cb)
+  return () => {
+    authListeners.delete(cb)
+  }
+}
+
+/** React hook: current sync user, re-rendering on auth changes. */
+export function useSyncUser(): User | null {
+  return useSyncExternalStore(
+    subscribeAuth,
+    () => currentUser,
+    () => null,
+  )
 }
 
 export async function signOutSync() {
-  if (fb.auth) await fb.auth.signOut()
+  const fb = await getFirebase()
+  if (fb) await fb.auth.signOut()
 }
 
 export async function signInWithGoogle() {
-  if (!fb.auth) return
+  const fb = await getFirebase()
+  if (!fb) return
+  const { GoogleAuthProvider, linkWithPopup, signInWithPopup, linkWithRedirect, signInWithRedirect } = await import(
+    'firebase/auth'
+  )
   const provider = new GoogleAuthProvider()
   try {
     if (currentUser && currentUser.isAnonymous) {
@@ -110,7 +143,9 @@ export async function signInWithGoogle() {
     } else {
       await signInWithPopup(fb.auth, provider)
     }
-  } catch (e: any) {
+    // Linking does not always fire onAuthStateChanged; refresh explicitly
+    setCurrentUser(fb.auth.currentUser)
+  } catch {
     // Popup blocked or disallowed; try redirect
     try {
       if (currentUser && currentUser.isAnonymous) {

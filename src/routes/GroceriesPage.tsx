@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { GroceryListView } from '../components/GroceryListView'
 import { SavedListManager } from '../components/SavedListManager'
 import { useStore } from '../state/store'
@@ -10,11 +11,13 @@ export function GroceriesPage() {
 
   useEffect(() => {
     if (!apk) return
-    let wakeLock: any = null
+    type WakeLockSentinel = { release?: () => Promise<void> }
+    type WakeLockNavigator = Navigator & { wakeLock?: { request: (type: 'screen') => Promise<WakeLockSentinel> } }
+    let wakeLock: WakeLockSentinel | null = null
     const request = async () => {
       try {
-        // @ts-ignore
-        if (navigator.wakeLock?.request) wakeLock = await navigator.wakeLock.request('screen')
+        const nav = navigator as WakeLockNavigator
+        if (nav.wakeLock?.request) wakeLock = await nav.wakeLock.request('screen')
       } catch {}
     }
     request()
@@ -30,11 +33,17 @@ export function GroceriesPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold">Grocery list</h1>
+      {selectedRecipeIds.length === 0 && (
+        <div className="card p-3 text-sm text-slate-600">
+          No recipes selected for this week.{' '}
+          <Link to="/recipes" className="text-orange-700 underline underline-offset-2">
+            Pick recipes
+          </Link>{' '}
+          to generate a grocery list, or add individual items below.
+        </div>
+      )}
       <GroceryListView />
       <SavedListManager />
-      {selectedRecipeIds.length === 0 && (
-        <p className="text-sm text-slate-500">Select recipes to generate a grocery list.</p>
-      )}
     </div>
   )
 }

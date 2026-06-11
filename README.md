@@ -1,6 +1,6 @@
 # Grocery Helper — Recipe & Grocery Aggregator
 
-Store recipes and generate aggregated grocery lists. 100% static web app (React + TypeScript + Vite), data saved locally in your browser with optional cloud sync. Deploys automatically to GitHub Pages.
+Store recipes and generate aggregated grocery lists. 100% static web app (React + TypeScript + Vite), data saved locally in your browser with optional cloud sync. Deploys automatically to GitHub Pages. The Firebase SDK is lazy-loaded, so the core app stays small and loads fast.
 
 ## Features
 
@@ -13,8 +13,8 @@ Store recipes and generate aggregated grocery lists. 100% static web app (React 
 - Check off items inline; clear checks; swipe gestures on touch (right to check, left to remove extras).
 - Virtualized list for large lists (120+ items) using react-window for smooth scrolling.
 - Optional cloud sync via Firebase (anonymous sign-in + Google sign-in), with offline persistence and conflict resolution by timestamp.
-- Import/Export JSON backup in Settings.
-- Responsive and touch-friendly; basic keyboard support (Enter to add, Delete to remove); haptic + confetti celebration on completion (APK mode).
+- Import/Export JSON backup in Settings (import asks for confirmation before replacing data).
+- Responsive and touch-friendly; bottom navigation on small screens (web and APK); basic keyboard support (Enter to add, Delete to remove); haptic + confetti celebration on completion (APK mode), toast on the web.
 
 ## Tech
 

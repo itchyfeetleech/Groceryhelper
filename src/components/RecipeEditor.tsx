@@ -7,13 +7,15 @@ type Props = {
   value: Recipe
   onChange: (r: Recipe) => void
   onSave: () => void
+  duplicateTitle?: boolean
 }
 
-export function RecipeEditor({ value, onChange, onSave }: Props) {
+export function RecipeEditor({ value, onChange, onSave, duplicateTitle }: Props) {
   const [title, setTitle] = useState(value.title)
   const [standard, setStandard] = useState<string[]>(value.standard)
   const [special, setSpecial] = useState<string[]>(value.special)
-  const [warnDupTitle, setWarnDupTitle] = useState(false)
+  const [dupNotice, setDupNotice] = useState('')
+  const titleInput = useRef<HTMLInputElement>(null)
   const stdInput = useRef<HTMLInputElement>(null)
   const spcInput = useRef<HTMLInputElement>(null)
 
@@ -23,46 +25,44 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
     setSpecial(value.special)
   }, [value])
 
+  // Focus the title when starting a brand-new recipe
+  useEffect(() => {
+    if (!value.title) titleInput.current?.focus()
+  }, [value.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     onChange({ ...value, title, standard, special })
-  }, [title, standard, special])
+  }, [title, standard, special]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleAddStandard = () => {
-    const val = stdInput.current?.value ?? ''
-    const name = val.trim()
+  const addIngredient = (section: 'standard' | 'special') => {
+    const input = section === 'standard' ? stdInput.current : spcInput.current
+    const name = (input?.value ?? '').trim()
     const norm = normalizeName(name)
     if (!norm) return
-    if (standard.some((i) => normalizeName(i) === norm) || special.some((i) => normalizeName(i) === norm)) return
-    setStandard([...standard, name])
-    if (stdInput.current) stdInput.current.value = ''
-  }
-  const handleAddSpecial = () => {
-    const val = spcInput.current?.value ?? ''
-    const name = val.trim()
-    const norm = normalizeName(name)
-    if (!norm) return
-    if (special.some((i) => normalizeName(i) === norm) || standard.some((i) => normalizeName(i) === norm)) return
-    setSpecial([...special, name])
-    if (spcInput.current) spcInput.current.value = ''
+    if (standard.some((i) => normalizeName(i) === norm) || special.some((i) => normalizeName(i) === norm)) {
+      setDupNotice(`"${name}" is already in this recipe.`)
+      return
+    }
+    setDupNotice('')
+    if (section === 'standard') setStandard([...standard, name])
+    else setSpecial([...special, name])
+    if (input) input.value = ''
   }
 
   const removeAt = (section: 'standard' | 'special', index: number) => {
     if (section === 'standard') setStandard(standard.filter((_, i) => i !== index))
     else setSpecial(special.filter((_, i) => i !== index))
   }
-  const moveUp = (section: 'standard' | 'special', index: number) => {
+  const move = (section: 'standard' | 'special', index: number, delta: -1 | 1) => {
     const arr = section === 'standard' ? [...standard] : [...special]
-    if (index <= 0) return
-    const [item] = arr.splice(index, 1)
-    arr.splice(index - 1, 0, item)
-    section === 'standard' ? setStandard(arr) : setSpecial(arr)
-  }
-  const moveDown = (section: 'standard' | 'special', index: number) => {
-    const arr = section === 'standard' ? [...standard] : [...special]
-    if (index >= arr.length - 1) return
-    const [item] = arr.splice(index, 1)
-    arr.splice(index + 1, 0, item)
-    section === 'standard' ? setStandard(arr) : setSpecial(arr)
+    const target = index + delta
+    const a = arr[index]
+    const b = arr[target]
+    if (a === undefined || b === undefined) return
+    arr[index] = b
+    arr[target] = a
+    if (section === 'standard') setStandard(arr)
+    else setSpecial(arr)
   }
 
   const onSubmit = (e: React.FormEvent) => {
@@ -83,17 +83,19 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
-        <label htmlFor="title" className="block text-sm font-medium">Title</label>
+        <label htmlFor="title" className="block text-sm font-medium">
+          Title
+        </label>
         <input
           id="title"
+          ref={titleInput}
           className="mt-1 input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Lasagne"
           required
         />
-        {warnDupTitle && (
-          <p className="text-xs text-amber-700 mt-1">Warning: another recipe has this title.</p>
-        )}
+        {duplicateTitle && <p className="text-xs text-amber-700 mt-1">Another recipe already has this title.</p>}
       </div>
 
       <fieldset>
@@ -105,18 +107,23 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
             className="flex-1 input"
             enterKeyHint="done"
             onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); handleAddStandard() }
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addIngredient('standard')
+              }
             }}
             aria-label="Add standard ingredient"
           />
-          <button type="button" className="btn-primary" onClick={handleAddStandard} aria-label="Add standard ingredient">Add</button>
+          <button type="button" className="btn-primary" onClick={() => addIngredient('standard')}>
+            Add
+          </button>
         </div>
         <div className="mt-2">
           <IngredientChips
             items={standard}
             onDelete={(i) => removeAt('standard', i)}
-            onMoveUp={(i) => moveUp('standard', i)}
-            onMoveDown={(i) => moveDown('standard', i)}
+            onMoveUp={(i) => move('standard', i, -1)}
+            onMoveDown={(i) => move('standard', i, 1)}
           />
         </div>
       </fieldset>
@@ -130,55 +137,40 @@ export function RecipeEditor({ value, onChange, onSave }: Props) {
             className="flex-1 input"
             enterKeyHint="done"
             onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); handleAddSpecial() }
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addIngredient('special')
+              }
             }}
             aria-label="Add special ingredient"
           />
-          <button type="button" className="btn-primary" onClick={handleAddSpecial} aria-label="Add special ingredient">Add</button>
+          <button type="button" className="btn-primary" onClick={() => addIngredient('special')}>
+            Add
+          </button>
         </div>
         <div className="mt-2">
           <IngredientChips
             items={special}
             onDelete={(i) => removeAt('special', i)}
-            onMoveUp={(i) => moveUp('special', i)}
-            onMoveDown={(i) => moveDown('special', i)}
+            onMoveUp={(i) => move('special', i, -1)}
+            onMoveDown={(i) => move('special', i, 1)}
           />
         </div>
       </fieldset>
 
-      {dupWithin.length > 0 && (
-        <p className="text-xs text-amber-700">Duplicate names across sections will aggregate by name.</p>
-      )}
+      <div aria-live="polite">
+        {dupNotice && <p className="text-xs text-amber-700">{dupNotice}</p>}
+        {dupWithin.length > 0 && (
+          <p className="text-xs text-amber-700">Duplicate names across sections will aggregate by name.</p>
+        )}
+      </div>
 
-      <div className="flex gap-2">
-        <button type="submit" className="btn-primary">Save</button>
+      <div className="flex gap-2 items-center">
+        <button type="submit" className="btn-primary">
+          Done
+        </button>
+        <span className="text-xs text-slate-500">Changes are saved as you type.</span>
       </div>
     </form>
-  )
-}
-
-function Chips({
-  items,
-  onDelete,
-  onMoveUp,
-  onMoveDown,
-}: {
-  items: string[]
-  onDelete: (i: number) => void
-  onMoveUp: (i: number) => void
-  onMoveDown: (i: number) => void
-}) {
-  if (!items.length) return <p className="text-sm text-slate-500">No ingredients.</p>
-  return (
-    <ul className="flex flex-wrap gap-2" aria-live="polite">
-      {items.map((ing, i) => (
-        <li key={`${normalizeName(ing)}-${i}`} className="flex items-center gap-1 bg-slate-100 rounded-full px-2 py-1">
-          <span className="text-sm">{ing}</span>
-          <button type="button" className="text-xs px-1 rounded border border-slate-300" onClick={() => onMoveUp(i)} disabled={i === 0} aria-label={`Move ${ing} up`}>↑</button>
-          <button type="button" className="text-xs px-1 rounded border border-slate-300" onClick={() => onMoveDown(i)} disabled={i === items.length - 1} aria-label={`Move ${ing} down`}>↓</button>
-          <button type="button" className="text-xs px-1 rounded border border-red-300 text-red-700" onClick={() => onDelete(i)} aria-label={`Remove ${ing}`}>✕</button>
-        </li>
-      ))}
-    </ul>
   )
 }

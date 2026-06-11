@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { List, type RowComponentProps } from 'react-window'
+import { useSwipeable } from 'react-swipeable'
 import { useStore } from '../state/store'
-import { aggregateUnified } from '../utils/aggregate'
+import { aggregateUnified, type AggregatedUnifiedItem } from '../utils/aggregate'
 import { normalizeName } from '../utils/normalization'
 import { useIsApk } from '../utils/apk'
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber'
 import { ProgressRing } from '../ui/ProgressRing'
 import { useToast } from '../ui/Toast'
 import { haptic } from '../utils/haptics'
-import { useSwipeable } from 'react-swipeable'
-// react-window is dynamically imported in virtualized branch to avoid build export issues
+
+const VIRTUALIZE_THRESHOLD = 120
+const VIRTUAL_ROW_HEIGHT = 68
 
 export function GroceryListView() {
   const apk = useIsApk()
@@ -24,15 +27,23 @@ export function GroceryListView() {
     removeExtra,
     addExtra,
   } = useStore()
+  const { show } = useToast()
 
   const agg = useMemo(() => aggregateUnified(recipes, selectedRecipeIds, extras), [recipes, selectedRecipeIds, extras])
   const [extraName, setExtraName] = useState('')
   const [hideChecked, setHideChecked] = useState(false)
+
   const addExtraItem = () => {
-    const n = normalizeName(extraName)
-    if (!n) return
+    const norm = normalizeName(extraName)
+    if (!norm) return
+    const duplicate = extras.some((e) => normalizeName(e.name) === norm && e.section === 'standard')
+    if (duplicate) {
+      show({ text: `"${extraName.trim()}" is already on the list` })
+      return
+    }
     addExtra({ name: extraName, section: 'standard', source: 'manual' })
     setExtraName('')
+    if (apk) haptic('medium')
   }
 
   // Announce recomputes
@@ -46,10 +57,7 @@ export function GroceryListView() {
   useEffect(() => {
     const available = new Set(agg.map((i) => i.norm))
     const pruned = checkedNames.filter((n) => available.has(n))
-    if (
-      pruned.length !== checkedNames.length ||
-      pruned.some((n, idx) => n !== checkedNames[idx])
-    ) {
+    if (pruned.length !== checkedNames.length || pruned.some((n, idx) => n !== checkedNames[idx])) {
       replaceCheckedNames(pruned)
     }
   }, [agg, checkedNames, replaceCheckedNames])
@@ -64,26 +72,41 @@ export function GroceryListView() {
   const animRemaining = useAnimatedNumber(remainingCount)
   const animTotal = useAnimatedNumber(totalCount)
   const progress = totalCount > 0 ? (totalCount - remainingCount) / totalCount : 0
-  const { show } = useToast()
-  const [showAdd, setShowAdd] = useState(false)
-  const [virtualize, setVirtualize] = useState(false)
-  useEffect(() => {
-    if (!virtualize && totalCount > 120) setVirtualize(true)
-  }, [totalCount, virtualize])
 
-  // Celebrate when finished
+  // Celebrate only when crossing the finish line, not on every recompute of a finished list
+  const prevRemainingRef = useRef<number | null>(null)
   useEffect(() => {
-    if (totalCount > 0 && remainingCount === 0) {
-      if (apk) {
-        haptic('heavy')
-        import('canvas-confetti')
-          .then((m) => m.default({ particleCount: 60, spread: 60, origin: { y: 0.8 } }))
-          .catch(() => {})
-      } else {
-        show({ text: 'All done! 🎉' })
-      }
+    const prev = prevRemainingRef.current
+    prevRemainingRef.current = remainingCount
+    if (totalCount === 0 || remainingCount > 0 || prev === null || prev === 0) return
+    if (apk) {
+      haptic('heavy')
+      import('canvas-confetti')
+        .then((m) => m.default({ particleCount: 60, spread: 60, origin: { y: 0.8 } }))
+        .catch(() => {})
+    } else {
+      show({ text: 'All done! 🎉' })
     }
-  }, [apk, totalCount, remainingCount])
+  }, [apk, totalCount, remainingCount, show])
+
+  const onToggle = (norm: string) => {
+    toggleChecked(norm)
+    haptic('light')
+  }
+  const onRemove = (norm: string) => {
+    const extra = extras.find((e) => normalizeName(e.name) === norm && e.section === 'standard')
+    removeExtra(norm, 'standard')
+    haptic('medium')
+    if (extra) {
+      show({
+        text: `Removed ${extra.name}`,
+        actionLabel: 'Undo',
+        onAction: () => addExtra({ name: extra.name, section: 'standard', source: extra.source ?? 'manual' }),
+      })
+    }
+  }
+
+  const listEmpty = selectedRecipeIds.length === 0 && extras.length === 0
 
   return (
     <div className="space-y-4">
@@ -97,58 +120,53 @@ export function GroceryListView() {
               if (e.key === 'Enter') {
                 e.preventDefault()
                 addExtraItem()
-                if (apk) haptic('medium')
               }
             }}
             className="flex-1 input"
-            placeholder="Add item (standard)"
+            placeholder="e.g. Milk"
             aria-label="Add individual item"
             enterKeyHint="done"
           />
-          <button
-            className="btn-primary"
-            onClick={() => { addExtraItem(); if (apk) haptic('medium') }}
-            disabled={!extraName.trim()}
-          >
+          <button className="btn-primary" onClick={addExtraItem} disabled={!extraName.trim()}>
             Add
           </button>
         </div>
       </section>
 
       <section>
-        <h2 className="font-medium mb-2 hidden md:block">Grocery list</h2>
-        <div className="flex items-center justify-between mb-2 text-sm">
-          <div className="flex items-center gap-2 text-slate-600">
-            <ProgressRing progress={progress} ariaLabel={`Progress ${Math.round(progress * 100)}%`} />
-            <div>
-              <span className="font-medium text-slate-800">{animRemaining}</span>
-              {' '}of{' '}
-              <span className="font-medium text-slate-800">{animTotal}</span> remaining
+        {totalCount > 0 && (
+          <div className="flex items-center justify-between mb-2 text-sm">
+            <div className="flex items-center gap-2 text-slate-600">
+              <ProgressRing progress={progress} ariaLabel={`Progress ${Math.round(progress * 100)}%`} />
+              <div>
+                <span className="font-medium text-slate-800">{animRemaining}</span>
+                {' '}of{' '}
+                <span className="font-medium text-slate-800">{animTotal}</span> remaining
+              </div>
             </div>
+            <label className="inline-flex items-center gap-2 text-slate-700">
+              <input
+                type="checkbox"
+                checked={hideChecked}
+                onChange={(e) => setHideChecked(e.target.checked)}
+                aria-label="Hide checked items"
+              />
+              <span>Hide checked</span>
+            </label>
           </div>
-          <label className="inline-flex items-center gap-2 text-slate-700">
-            <input type="checkbox" checked={hideChecked} onChange={(e) => setHideChecked(e.target.checked)} aria-label="Hide checked items" />
-            <span>Hide checked</span>
-          </label>
-        </div>
+        )}
 
         <Items
           items={hideChecked ? remaining : agg}
+          emptyText={
+            listEmpty
+              ? 'Nothing here yet. Pick recipes for the week or add items above.'
+              : 'All items are checked off and hidden.'
+          }
           checkedNames={checkedNames}
-          onToggle={(norm) => {
-            toggleChecked(norm)
-            haptic('light')
-          }}
-          onRemove={(norm) => {
-            // Try to find an extra to allow undo
-            const extra = extras.find((e) => normalizeName(e.name) === norm && e.section === 'standard')
-            removeExtra(norm, 'standard')
-            haptic('medium')
-            if (extra) {
-              show({ text: `Removed ${extra.name}`, actionLabel: 'Undo', onAction: () => addExtra({ name: extra.name, section: 'standard', source: 'manual' }) })
-            }
-          }}
-          canRemove={(norm) => canRemove(norm)}
+          onToggle={onToggle}
+          onRemove={onRemove}
+          canRemove={canRemove}
           apk={apk}
         />
 
@@ -158,13 +176,11 @@ export function GroceryListView() {
             <div className="mt-2">
               <Items
                 items={completed}
+                emptyText=""
                 checkedNames={checkedNames}
-                onToggle={(norm) => {
-                  toggleChecked(norm)
-                  try { if (apk && 'vibrate' in navigator) (navigator as any).vibrate(10) } catch {}
-                }}
-                onRemove={(norm) => removeExtra(norm, 'standard')}
-                canRemove={(norm) => canRemove(norm)}
+                onToggle={onToggle}
+                onRemove={onRemove}
+                canRemove={canRemove}
                 apk={apk}
               />
             </div>
@@ -173,9 +189,12 @@ export function GroceryListView() {
       </section>
 
       <div className="flex items-center gap-2">
-        <button className="btn" onClick={clearChecks}>Clear checks</button>
+        <button className="btn" onClick={clearChecks} disabled={checkedNames.length === 0}>
+          Clear checks
+        </button>
         <button
           className="btn-danger"
+          disabled={listEmpty && checkedNames.length === 0}
           onClick={() => {
             if (confirm('Clear the current list? This removes selected recipes, extras, and checks.')) {
               clearCurrentList()
@@ -186,232 +205,216 @@ export function GroceryListView() {
         </button>
         <div ref={liveRef} aria-live="polite" className="sr-only" />
       </div>
-      {/* Bottom add bar removed for APK to simplify and avoid overlay issues */}
     </div>
   )
 }
 
+type ItemCallbacks = {
+  checkedNames: string[]
+  onToggle: (norm: string) => void
+  onRemove: (norm: string) => void
+  canRemove: (norm: string) => boolean
+}
+
 function Items({
   items,
+  emptyText,
   checkedNames,
   onToggle,
   onRemove,
   canRemove,
   apk,
-}: {
-  items: { norm: string; name: string; count: number; sources: { standard: boolean; special: boolean; fromFavourite: boolean; recipeNames: string[] } }[]
-  checkedNames: string[]
-  onToggle: (norm: string) => void
-  onRemove: (norm: string) => void
-  canRemove: (norm: string) => boolean
+}: ItemCallbacks & {
+  items: AggregatedUnifiedItem[]
+  emptyText: string
   apk: boolean
 }) {
-  if (items.length === 0) return <p className="text-sm text-slate-500">No items.</p>
-  // Stabilize virtualization to avoid toggling around the threshold
-  const [everVirtual, setEverVirtual] = useState(items.length > 120)
-  useEffect(() => { if (items.length > 120) setEverVirtual(true) }, [items.length])
-  // Disable virtualization in APK mode to ensure native scrolling works well in TWA
-  const shouldVirtualize = !apk && everVirtual
-  if (shouldVirtualize) {
-    const Row = ({ index, style }: { index: number; style: any }) => {
-      const it = items[index]
-      const checked = checkedNames.includes(it.norm)
-      const handlers = useSwipeable({
-        onSwipedLeft: () => { if (canRemove(it.norm)) onRemove(it.norm) },
-        onSwipedRight: () => onToggle(it.norm),
-        preventScrollOnSwipe: false,
-        delta: 35,
-        trackTouch: true,
-        touchEventOptions: { passive: true },
-      })
-      return (
-        <div style={style} {...handlers}>
-          <div className={'flex items-center justify-between gap-3 card px-3 py-2 mx-0.5 my-1 transition-shadow ' + (checked ? 'opacity-80' : 'hover:shadow-md')}>
-            <label className="flex items-center gap-2 min-w-0 cursor-pointer">
-              <input type="checkbox" checked={checked} onChange={() => onToggle(it.norm)} aria-label={`Check ${it.name}`} />
-              <span className={checked ? 'line-through text-slate-500 truncate' : 'truncate'} title={`${it.name} x ${it.count}`}>
-                {it.name} x {it.count}
-              </span>
-            </label>
-            <div className="flex items-center gap-2">
-              <div className="flex flex-wrap gap-1 justify-end">
-                {it.sources.standard && (
-                  <span className="text-[12px] px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-800">Standard</span>
-                )}
-                {it.sources.special && (
-                  <span className="text-[12px] px-1.5 py-0.5 rounded bg-amber-100 border border-amber-300 text-amber-900">Special</span>
-                )}
-                {it.sources.fromFavourite && (
-                  <span className="text-[12px] px-1.5 py-0.5 rounded bg-emerald-100 border border-emerald-300 text-emerald-900">Favourite</span>
-                )}
-                {(() => {
-                  const names = it.sources.recipeNames
-                  const shown = names.slice(0, 2)
-                  const hidden = names.length - shown.length
-                  return (
-                    <>
-                      {shown.map((n) => (
-                        <span key={n} className="text-[12px] px-1.5 py-0.5 rounded bg-blue-100 border border-blue-300 text-blue-900" title={`From recipe: ${n}`}>
-                          {n}
-                        </span>
-                      ))}
-                      {hidden > 0 && (
-                        <span className="text-[12px] px-1.5 py-0.5 rounded bg-blue-50 border border-blue-300 text-blue-900" title={names.join(', ')} aria-label={`From recipes: ${names.join(', ')}`}>
-                          +{hidden} recipes
-                        </span>
-                      )}
-                    </>
-                  )
-                })()}
-              </div>
-              {canRemove(it.norm) && (
-                <button className="btn-icon btn-icon-danger" onClick={() => onRemove(it.norm)} aria-label={`Remove extra ${it.name}`} title={`Remove ${it.name}`}>
-                  <svg aria-hidden="true" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M6 7h12M9 7l1-2h4l1 2M8 7v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7"/>
-                    <path d="M10 11v6M14 11v6"/>
-                  </svg>
-                  <span className="sr-only">Remove</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )
-    }
-    // Use a safe height to avoid layout thrash; fixed item size generous to prevent clipping of badges
-    const height = Math.max(320, Math.min(680, Math.round(window.innerHeight * 0.7)))
-    const itemSize = 68
-    const [VListMod, setVListMod] = useState<any>(null)
-    useEffect(() => {
-      let mounted = true
-      import('react-window')
-        .then((m) => { if (mounted) setVListMod((m as any).FixedSizeList || (m as any).default?.FixedSizeList) })
-        .catch(() => { if (mounted) setVListMod(null) })
-      return () => { mounted = false }
-    }, [])
-    if (!VListMod) {
-      // Fallback to simple list until module loads
-      return (
-        <ul className="space-y-2" aria-label="Grocery items">
-          {items.map((it) => (
-            <ListItem
-              key={it.norm}
-              item={it}
-              checked={checkedNames.includes(it.norm)}
-              onToggle={onToggle}
-              onRemove={onRemove}
-              canRemove={canRemove}
-            />
-          ))}
-        </ul>
-      )
-    }
-    const VList = VListMod
+  // Once virtualized, stay virtualized to avoid flip-flopping around the threshold
+  const [everVirtual, setEverVirtual] = useState(items.length > VIRTUALIZE_THRESHOLD)
+  useEffect(() => {
+    if (items.length > VIRTUALIZE_THRESHOLD) setEverVirtual(true)
+  }, [items.length])
+
+  if (items.length === 0) return <p className="text-sm text-slate-500">{emptyText}</p>
+
+  // Virtualization is disabled in APK mode so native scrolling works well in the TWA
+  if (!apk && everVirtual) {
     return (
-      <div role="list" aria-label="Grocery items (virtualized)">
-        <VList height={height} itemCount={items.length} itemSize={itemSize} width={'100%'} overscanCount={6}>
-          {Row as any}
-        </VList>
-      </div>
+      <VirtualizedItems
+        items={items}
+        checkedNames={checkedNames}
+        onToggle={onToggle}
+        onRemove={onRemove}
+        canRemove={canRemove}
+      />
     )
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-2" aria-label="Grocery items">
       {items.map((it) => (
-        <ListItem
-          key={it.norm}
-          item={it}
-          checked={checkedNames.includes(it.norm)}
-          onToggle={onToggle}
-          onRemove={onRemove}
-          canRemove={canRemove}
-        />
+        <li key={it.norm}>
+          <ItemCard
+            item={it}
+            checked={checkedNames.includes(it.norm)}
+            onToggle={onToggle}
+            onRemove={onRemove}
+            removable={canRemove(it.norm)}
+          />
+        </li>
       ))}
     </ul>
   )
 }
 
-function ListItem({
+type VirtualRowProps = ItemCallbacks & { items: AggregatedUnifiedItem[] }
+
+function VirtualRow({
+  index,
+  style,
+  items,
+  checkedNames,
+  onToggle,
+  onRemove,
+  canRemove,
+}: RowComponentProps<VirtualRowProps>) {
+  const it = items[index]
+  if (!it) return null
+  return (
+    <div style={style} className="py-1 px-0.5">
+      <ItemCard
+        item={it}
+        checked={checkedNames.includes(it.norm)}
+        onToggle={onToggle}
+        onRemove={onRemove}
+        removable={canRemove(it.norm)}
+      />
+    </div>
+  )
+}
+
+function VirtualizedItems({ items, ...callbacks }: ItemCallbacks & { items: AggregatedUnifiedItem[] }) {
+  const height = Math.max(320, Math.min(680, Math.round(window.innerHeight * 0.7)))
+  return (
+    <List
+      style={{ height }}
+      role="list"
+      aria-label="Grocery items"
+      rowComponent={VirtualRow}
+      rowCount={items.length}
+      rowHeight={VIRTUAL_ROW_HEIGHT}
+      rowProps={{ items, ...callbacks }}
+      overscanCount={6}
+    />
+  )
+}
+
+function ItemCard({
   item: it,
   checked,
   onToggle,
   onRemove,
-  canRemove,
+  removable,
 }: {
-  item: { norm: string; name: string; count: number; sources: { standard: boolean; special: boolean; fromFavourite: boolean; recipeNames: string[] } }
+  item: AggregatedUnifiedItem
   checked: boolean
   onToggle: (norm: string) => void
   onRemove: (norm: string) => void
-  canRemove: (norm: string) => boolean
+  removable: boolean
 }) {
   const handlers = useSwipeable({
-    onSwipedLeft: () => { if (canRemove(it.norm)) onRemove(it.norm) },
+    onSwipedLeft: () => {
+      if (removable) onRemove(it.norm)
+    },
     onSwipedRight: () => onToggle(it.norm),
     preventScrollOnSwipe: false,
     delta: 35,
     trackTouch: true,
     touchEventOptions: { passive: true },
   })
+  const label = it.count > 1 ? `${it.name} ×${it.count}` : it.name
   return (
-    <li className={'flex items-center justify-between gap-3 card px-3 py-2 transition-shadow ' + (checked ? 'opacity-80' : 'hover:shadow-md')} {...handlers}>
+    <div
+      {...handlers}
+      className={
+        'flex items-center justify-between gap-3 card px-3 py-2 transition-shadow ' +
+        (checked ? 'opacity-80' : 'hover:shadow-md')
+      }
+    >
       <label className="flex items-center gap-2 min-w-0 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={() => onToggle(it.norm)}
-          aria-label={`Check ${it.name}`}
-        />
-        <span className={checked ? 'line-through text-slate-500 truncate' : 'truncate'} title={`${it.name} x ${it.count}`}>
-          {it.name} x {it.count}
+        <input type="checkbox" checked={checked} onChange={() => onToggle(it.norm)} aria-label={`Check ${it.name}`} />
+        <span className={checked ? 'line-through text-slate-500 truncate' : 'truncate'} title={label}>
+          {label}
         </span>
       </label>
       <div className="flex items-center gap-2">
-        <div className="flex flex-wrap gap-1 justify-end">
-          {it.sources.standard && (
-            <span className="text-[12px] px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-800">Standard</span>
-          )}
-          {it.sources.special && (
-            <span className="text-[12px] px-1.5 py-0.5 rounded bg-amber-100 border border-amber-300 text-amber-900">Special</span>
-          )}
-          {it.sources.fromFavourite && (
-            <span className="text-[12px] px-1.5 py-0.5 rounded bg-emerald-100 border border-emerald-300 text-emerald-900">Favourite</span>
-          )}
-          {/* Recipe origins: show up to 2, then +N with tooltip */}
-          {(() => {
-            const names = it.sources.recipeNames
-            const shown = names.slice(0, 2)
-            const hidden = names.length - shown.length
-            return (
-              <>
-                {shown.map((n) => (
-                  <span key={n} className="text-[12px] px-1.5 py-0.5 rounded bg-blue-100 border border-blue-300 text-blue-900" title={`From recipe: ${n}`}>
-                    {n}
-                  </span>
-                ))}
-                {hidden > 0 && (
-                  <span
-                    className="text-[12px] px-1.5 py-0.5 rounded bg-blue-50 border border-blue-300 text-blue-900"
-                    title={names.join(', ')}
-                    aria-label={`From recipes: ${names.join(', ')}`}
-                  >
-                    +{hidden} recipes
-                  </span>
-                )}
-              </>
-            )
-          })()}
-        </div>
-        {canRemove(it.norm) && (
-          <button className="btn-icon btn-icon-danger" onClick={() => onRemove(it.norm)} aria-label={`Remove extra ${it.name}`} title={`Remove ${it.name}`}>
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 7h12M9 7l1-2h4l1 2M8 7v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7"/>
-              <path d="M10 11v6M14 11v6"/>
+        <SourceBadges sources={it.sources} />
+        {removable && (
+          <button
+            className="btn-icon btn-icon-danger"
+            onClick={() => onRemove(it.norm)}
+            aria-label={`Remove extra ${it.name}`}
+            title={`Remove ${it.name}`}
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 7h12M9 7l1-2h4l1 2M8 7v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7" />
+              <path d="M10 11v6M14 11v6" />
             </svg>
             <span className="sr-only">Remove</span>
           </button>
         )}
       </div>
-    </li>
+    </div>
+  )
+}
+
+function SourceBadges({ sources }: { sources: AggregatedUnifiedItem['sources'] }) {
+  const shown = sources.recipeNames.slice(0, 2)
+  const hidden = sources.recipeNames.length - shown.length
+  return (
+    <div className="flex flex-wrap gap-1 justify-end">
+      {sources.standard && (
+        <span className="text-[12px] px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-800">
+          Standard
+        </span>
+      )}
+      {sources.special && (
+        <span className="text-[12px] px-1.5 py-0.5 rounded bg-amber-100 border border-amber-300 text-amber-900">
+          Special
+        </span>
+      )}
+      {sources.fromFavourite && (
+        <span className="text-[12px] px-1.5 py-0.5 rounded bg-emerald-100 border border-emerald-300 text-emerald-900">
+          Favourite
+        </span>
+      )}
+      {shown.map((n) => (
+        <span
+          key={n}
+          className="text-[12px] px-1.5 py-0.5 rounded bg-blue-100 border border-blue-300 text-blue-900"
+          title={`From recipe: ${n}`}
+        >
+          {n}
+        </span>
+      ))}
+      {hidden > 0 && (
+        <span
+          className="text-[12px] px-1.5 py-0.5 rounded bg-blue-50 border border-blue-300 text-blue-900"
+          title={sources.recipeNames.join(', ')}
+          aria-label={`From recipes: ${sources.recipeNames.join(', ')}`}
+        >
+          +{hidden} recipes
+        </span>
+      )}
+    </div>
   )
 }

@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../state/store'
 import { normalizeName } from '../utils/normalization'
+import { useToast } from '../ui/Toast'
 
 export function FavouritesPanel() {
   const { favourites, extras, addFavourite, removeFavourite, addExtra, removeExtra } = useStore()
+  const { show } = useToast()
   const [favName, setFavName] = useState('')
 
   const extrasSet = useMemo(() => {
@@ -15,14 +17,19 @@ export function FavouritesPanel() {
   const addFav = () => {
     const n = normalizeName(favName)
     if (!n) return
-    addFavourite({ name: favName, section: 'special' })
+    if (favourites.some((f) => normalizeName(f.name) === n)) {
+      show({ text: `"${favName.trim()}" is already a favourite` })
+      return
+    }
+    addFavourite({ name: favName, section: 'standard' })
     setFavName('')
   }
 
   const list = useMemo(() => favourites.filter((f) => f.section === 'standard'), [favourites])
 
   const renderList = () => {
-    if (list.length === 0) return <p className="text-sm text-slate-500">None</p>
+    if (list.length === 0)
+      return <p className="text-sm text-slate-500">No favourites yet. Add items you buy every week.</p>
     return (
       <ul className="divide-y card">
         {list.map((f, i) => {
@@ -76,8 +83,9 @@ export function FavouritesPanel() {
             }
           }}
           className="flex-1 input"
-          placeholder="Add favourite item (always standard)"
+          placeholder="e.g. Bananas"
           aria-label="Favourite item name"
+          enterKeyHint="done"
         />
         <button className="btn-primary" onClick={addFav} disabled={!favName.trim()}>
           Add Favourite

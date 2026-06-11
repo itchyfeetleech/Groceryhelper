@@ -1,12 +1,11 @@
-import { initializeApp, getApps, type FirebaseApp } from 'firebase/app'
-import { getAuth, signInAnonymously, onAuthStateChanged, type User, type Auth } from 'firebase/auth'
-import { getFirestore, enableIndexedDbPersistence, type Firestore } from 'firebase/firestore'
+import type { FirebaseApp } from 'firebase/app'
+import type { Auth } from 'firebase/auth'
+import type { Firestore } from 'firebase/firestore'
 
-type FirebaseBundle = {
-  enabled: boolean
-  app?: FirebaseApp
-  auth?: Auth
-  db?: Firestore
+export type FirebaseBundle = {
+  app: FirebaseApp
+  auth: Auth
+  db: Firestore
 }
 
 const cfg = {
@@ -20,25 +19,31 @@ const cfg = {
 }
 
 // Only require the fields needed to initialize the Firebase app.
-const hasConfig = [
-  cfg.apiKey,
-  cfg.authDomain,
-  cfg.projectId,
-  cfg.appId,
-].every(Boolean)
+export const hasFirebaseConfig = [cfg.apiKey, cfg.authDomain, cfg.projectId, cfg.appId].every(Boolean)
 
-const bundle: FirebaseBundle = { enabled: hasConfig }
+let bundlePromise: Promise<FirebaseBundle | null> | null = null
 
-if (hasConfig) {
-  const app = getApps().length ? getApps()[0]! : initializeApp(cfg as any)
-  const auth = getAuth(app)
-  const db = getFirestore(app)
-  // Best-effort offline persistence with tab sync
-  enableIndexedDbPersistence(db, { synchronizeTabs: true }).catch(() => {})
-
-  bundle.app = app
-  bundle.auth = auth
-  bundle.db = db
+/**
+ * Lazily load and initialize the Firebase SDK. Keeps the (large) SDK out of the
+ * main bundle; resolves null when sync is not configured.
+ */
+export function getFirebase(): Promise<FirebaseBundle | null> {
+  if (!hasFirebaseConfig) return Promise.resolve(null)
+  if (!bundlePromise) {
+    bundlePromise = (async () => {
+      const [{ initializeApp, getApps }, { getAuth }, firestore] = await Promise.all([
+        import('firebase/app'),
+        import('firebase/auth'),
+        import('firebase/firestore'),
+      ])
+      const app = getApps().length ? getApps()[0]! : initializeApp(cfg as Record<string, string>)
+      const auth = getAuth(app)
+      // Offline persistence with multi-tab sync
+      const db = firestore.initializeFirestore(app, {
+        localCache: firestore.persistentLocalCache({ tabManager: firestore.persistentMultipleTabManager() }),
+      })
+      return { app, auth, db }
+    })()
+  }
+  return bundlePromise
 }
-
-export { bundle as fb }
