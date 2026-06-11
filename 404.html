@@ -2,9 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#ea580c" />
-    <title>Recipe & Grocery Aggregator</title>
+    <title>Grocery Helper</title>
     <meta name="description" content="Store recipes and generate aggregated grocery lists. Offline-first." />
     <link rel="icon" href="/favicon.ico" />
     <link rel="manifest" href="manifest.webmanifest" />
@@ -13,15 +13,15 @@
       try {
         var ref = document.referrer || ''
         var fromTwa = ref.indexOf('android-app://com.itchyfeetleech.groceryhelper') === 0
-        var hasParam = location.search.indexOf('apk') >= 0
+        var hasParam = new URLSearchParams(location.search).has('apk')
         if (fromTwa || hasParam || localStorage.getItem('isApk') === '1') {
           document.documentElement.classList.add('apk')
           try { localStorage.setItem('isApk', '1') } catch (e) {}
         }
       } catch (e) {}
     </script>
-    <script type="module" crossorigin src="/Groceryhelper/assets/index-B_H66Gpt.js"></script>
-    <link rel="stylesheet" crossorigin href="/Groceryhelper/assets/index-BWDOowKP.css">
+    <script type="module" crossorigin src="/Groceryhelper/assets/index-j_AjUEtO.js"></script>
+    <link rel="stylesheet" crossorigin href="/Groceryhelper/assets/index-C96pOqBr.css">
   </head>
   <body>
     <div id="root"></div>
