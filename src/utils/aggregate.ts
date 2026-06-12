@@ -1,5 +1,6 @@
 import type { ExtraItem, Recipe } from '../types'
 import { chooseDisplayName, normalizeName, titleCaseFromNormalized } from './normalization'
+import { resolveAisle } from './aisleDb'
 
 export type AggregatedItem = { norm: string; name: string; count: number }
 export type Aggregated = {
@@ -146,7 +147,7 @@ export function aggregateUnified(
       norm,
       count: e.count,
       name: chooseDisplayName(norm, e.variants.length ? e.variants : [titleCaseFromNormalized(norm)]),
-      category: categories[norm],
+      category: resolveAisle(norm, categories),
       sources: {
         standard: e.standard,
         special: e.special,

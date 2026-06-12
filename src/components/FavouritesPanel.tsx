@@ -3,6 +3,7 @@ import { useStore } from '../state/store'
 import { normalizeName } from '../utils/normalization'
 import { useToast } from '../ui/Toast'
 import { CategorySelect } from './CategorySelect'
+import { autoAisle, NO_AISLE, resolveAisle } from '../utils/aisleDb'
 import { EmptyState } from '../ui/EmptyState'
 
 export function FavouritesPanel() {
@@ -45,8 +46,11 @@ export function FavouritesPanel() {
               </div>
               <div className="flex items-center gap-2 flex-wrap justify-end shrink-0 max-w-[60%]">
                 <CategorySelect
-                  value={categories[norm]}
-                  onChange={(c) => setItemCategory(norm, c)}
+                  value={resolveAisle(norm, categories)}
+                  onChange={(c) => {
+                    if (!c && autoAisle(norm)) setItemCategory(norm, NO_AISLE)
+                    else setItemCategory(norm, c)
+                  }}
                   itemName={f.name}
                 />
                 <label className="inline-flex items-center gap-2">

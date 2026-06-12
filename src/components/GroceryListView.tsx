@@ -4,6 +4,7 @@ import { useSwipeable } from 'react-swipeable'
 import { useStore } from '../state/store'
 import { aggregateUnified, type AggregatedUnifiedItem } from '../utils/aggregate'
 import { groupByCategory } from '../utils/categories'
+import { autoAisle, NO_AISLE } from '../utils/aisleDb'
 import { CategorySelect } from './CategorySelect'
 import { normalizeName } from '../utils/normalization'
 import { useIsApk } from '../utils/apk'
@@ -128,7 +129,12 @@ export function GroceryListView() {
     }
   }
 
-  const onSetCategory = (norm: string, category: string | null) => setItemCategory(norm, category)
+  const onSetCategory = (norm: string, category: string | null) => {
+    // Choosing "No aisle" on an auto-matched item must store an explicit
+    // override; clearing an unmatched item just deletes the entry.
+    if (!category && autoAisle(norm)) setItemCategory(norm, NO_AISLE)
+    else setItemCategory(norm, category)
+  }
 
   // Virtualized rows have a fixed height sized for single-line cards; on narrow
   // screens cards wrap to two lines and would clip, so only virtualize on wide
@@ -198,12 +204,6 @@ export function GroceryListView() {
             </div>
           </div>
         )}
-        {groupByAisle && totalCount > 0 && !anyCategorized && (
-          <p className="text-xs muted mb-2">
-            Tip: tap the &ldquo;No aisle&rdquo; tag on an item to organize the list by store aisle.
-          </p>
-        )}
-
         {groupByAisle && anyCategorized ? (
           <GroupedItems
             items={visibleItems}

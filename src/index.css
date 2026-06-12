@@ -40,18 +40,26 @@
   --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
-/* Prevent mobile pull-to-refresh and horizontal panning; ensure stable viewport */
-html, body {
+/* Single scroll container (the viewport). Crucially, body must NOT get a fixed
+   height + hidden overflow-x, or it becomes a second, nested scroller and touch
+   scrolling depends on where the finger lands. */
+html {
   height: 100%;
+  overflow-x: hidden;
   overscroll-behavior-x: none;
   /* contain helps prevent browser-level PTR while still allowing inner scroll */
   overscroll-behavior-y: contain;
-  overflow-x: hidden;
   /* Let elements control their own touch behavior; avoid global locks on some Android builds */
   touch-action: auto;
   /* Keep browser text-inflation heuristics from distorting the layout */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+body {
+  min-height: 100%;
+  /* clip (unlike hidden) never creates a scroll container; hidden is the fallback */
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
