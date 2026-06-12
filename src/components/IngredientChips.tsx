@@ -14,10 +14,10 @@ export function IngredientChips({ items, onDelete, onMoveUp, onMoveDown }: Props
       {items.map((ing, i) => (
         <li
           key={`${normalizeName(ing)}-${i}`}
-          className="flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] py-1 pl-3 pr-1 shadow-sm"
+          className="flex items-center gap-1.5 max-w-full rounded-full border border-[var(--border)] bg-[var(--surface)] py-1 pl-3 pr-1 shadow-sm"
         >
-          <span className="text-sm text-soft">{ing}</span>
-          <div className="flex gap-0.5">
+          <span className="text-sm text-soft min-w-0 truncate">{ing}</span>
+          <div className="flex gap-0.5 shrink-0">
             <button
               type="button"
               className="chip-btn"

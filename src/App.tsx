@@ -119,7 +119,7 @@ export function App() {
         <main className={apk ? 'container py-3 has-bottom-nav' : 'container py-4 has-bottom-nav'}>
           {updateAvailable && (
             <div
-              className="card p-3 mb-4 flex items-center justify-between gap-3 !border-[var(--accent-200)] !bg-[var(--accent-50)]"
+              className="card p-3 mb-4 flex items-center justify-between flex-wrap gap-3 !border-[var(--accent-200)] !bg-[var(--accent-50)]"
               role="status"
               aria-live="polite"
             >
