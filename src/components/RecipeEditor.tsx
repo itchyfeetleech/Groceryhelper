@@ -169,7 +169,7 @@ export function RecipeEditor({ value, onChange, onSave, duplicateTitle }: Props)
         <button type="submit" className="btn-primary">
           Done
         </button>
-        <span className="text-xs text-slate-500">Changes are saved as you type.</span>
+        <span className="text-xs muted">Changes are saved as you type.</span>
       </div>
     </form>
   )

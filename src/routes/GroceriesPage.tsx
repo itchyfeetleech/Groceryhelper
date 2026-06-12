@@ -32,11 +32,11 @@ export function GroceriesPage() {
   }, [apk])
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Grocery list</h1>
+      <h1 className="page-title">Grocery list</h1>
       {selectedRecipeIds.length === 0 && (
-        <div className="card p-3 text-sm text-slate-600">
+        <div className="card p-3 text-sm text-soft">
           No recipes selected for this week.{' '}
-          <Link to="/recipes" className="text-orange-700 underline underline-offset-2">
+          <Link to="/recipes" className="font-medium text-[var(--accent-700)] underline underline-offset-2 decoration-[var(--accent-300)]">
             Pick recipes
           </Link>{' '}
           to generate a grocery list, or add individual items below.

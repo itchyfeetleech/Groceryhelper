@@ -1,7 +1,7 @@
 import React from 'react'
 
 type Props = { size?: number; stroke?: number; progress: number; ariaLabel?: string }
-export function ProgressRing({ size = 28, stroke = 3, progress, ariaLabel }: Props) {
+export function ProgressRing({ size = 32, stroke = 3.5, progress, ariaLabel }: Props) {
   const radius = (size - stroke) / 2
   const circumference = 2 * Math.PI * radius
   const clamped = Math.max(0, Math.min(1, progress))
@@ -9,7 +9,7 @@ export function ProgressRing({ size = 28, stroke = 3, progress, ariaLabel }: Pro
   return (
     <svg width={size} height={size} role={ariaLabel ? 'img' : 'presentation'} aria-label={ariaLabel}>
       <circle
-        stroke="#e5e7eb"
+        stroke="var(--border)"
         fill="transparent"
         strokeWidth={stroke}
         r={radius}

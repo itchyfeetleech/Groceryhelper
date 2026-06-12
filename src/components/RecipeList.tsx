@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../state/store'
 import type { Recipe } from '../types'
 import { RecipeEditor } from './RecipeEditor'
+import { EmptyState } from '../ui/EmptyState'
 
 function isEmptyDraft(r: Recipe | undefined): boolean {
   return !!r && !r.title.trim() && r.standard.length === 0 && r.special.length === 0
@@ -96,18 +97,18 @@ export function RecipeList() {
           </button>
         </div>
         {filtered.length === 0 ? (
-          <p className="text-sm text-slate-500">
+          <EmptyState>
             {recipes.length === 0 ? 'No recipes yet. Create your first one!' : 'No recipes match your search.'}
-          </p>
+          </EmptyState>
         ) : (
-          <ul className="divide-y card">
+          <ul className="divide-y divide-[var(--border)] card">
             {filtered.map((r) => (
               <li key={r.id} className="p-3 flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <div className="font-medium truncate">
-                    {r.title || <span className="text-slate-500">(Untitled)</span>}
+                    {r.title || <span className="muted">(Untitled)</span>}
                   </div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs muted">
                     {r.standard.length} standard • {r.special.length} special
                   </div>
                 </div>
@@ -192,7 +193,7 @@ export function RecipeList() {
             />
           </div>
         ) : (
-          <div className="text-sm text-slate-500">Select a recipe to edit, or create a new one.</div>
+          <div className="text-sm muted">Select a recipe to edit, or create a new one.</div>
         )}
       </section>
     </div>
