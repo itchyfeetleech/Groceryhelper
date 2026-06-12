@@ -14,7 +14,7 @@ export function BottomNav({ activePath }: { activePath: string }) {
           const active = activePath.startsWith(i.to)
           const Icon = i.icon
           return (
-            <li key={i.to}>
+            <li key={i.to} className="flex-1 min-w-0 flex justify-center">
               <Link to={i.to} className={active ? 'apk-nav-link active' : 'apk-nav-link'} aria-current={active ? 'page' : undefined}>
                 <Icon className="w-6 h-6" />
                 <span className="text-[12px]">{i.label}</span>

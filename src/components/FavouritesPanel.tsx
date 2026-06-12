@@ -40,10 +40,10 @@ export function FavouritesPanel() {
           const alreadyAdded = extrasSet.has(key)
           return (
             <li key={key + ':' + i} className="p-2 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span>{f.name}</span>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="truncate">{f.name}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap justify-end shrink-0 max-w-[60%]">
                 <CategorySelect
                   value={categories[norm]}
                   onChange={(c) => setItemCategory(norm, c)}

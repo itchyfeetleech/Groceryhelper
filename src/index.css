@@ -49,6 +49,9 @@ html, body {
   overflow-x: hidden;
   /* Let elements control their own touch behavior; avoid global locks on some Android builds */
   touch-action: auto;
+  /* Keep browser text-inflation heuristics from distorting the layout */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -90,10 +93,21 @@ body {
 /* Simple focus style */
 :focus-visible { outline: 2px solid var(--accent-500); outline-offset: 2px; }
 
-/* container helper */
-.container { @apply max-w-4xl mx-auto px-4; }
+/* container helper; respects display notches in landscape (viewport-fit=cover) */
+.container {
+  @apply max-w-4xl mx-auto;
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+}
 
 /* Form controls */
+/* Fieldsets default to min-inline-size: min-content and refuse to shrink,
+   which breaks truncation on narrow screens; legends live in the border slot
+   and won't wrap, so opt them out of that layout entirely */
+fieldset { min-inline-size: 0; }
+legend { float: left; width: 100%; padding: 0; }
+legend + * { clear: both; }
+
 input[type='checkbox'] {
   width: 1.125rem;
   height: 1.125rem;
@@ -215,15 +229,17 @@ input[type='checkbox'] {
 
 /* Badges */
 .badge {
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
   font-size: 11px;
   font-weight: 560;
-  line-height: 1.1;
+  line-height: 1.3;
   letter-spacing: 0.01em;
   padding: 3px 8px;
   border-radius: 999px;
   white-space: nowrap;
+  max-width: 8.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .badge-special { background: var(--accent-100); color: var(--accent-800); border: 1px solid var(--accent-200); }
 .badge-fav { background: #fdf0c9; color: #845d0c; border: 1px solid #f0dba0; }
@@ -307,6 +323,7 @@ input[type='checkbox'] {
   display: flex;
   align-items: center;
   gap: 12px;
+  max-width: min(92vw, 26rem);
   background: rgba(43, 33, 23, 0.96);
   color: #fbf4ea;
   border-radius: var(--radius-md);
@@ -315,8 +332,8 @@ input[type='checkbox'] {
   position: relative;
   overflow: hidden;
 }
-.toast-text { font-size: 14px; }
-.toast-action { background: transparent; border: 1px solid rgba(251, 244, 234, 0.35); color: #fbf4ea; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 560; }
+.toast-text { font-size: 14px; min-width: 0; overflow-wrap: anywhere; }
+.toast-action { flex-shrink: 0; background: transparent; border: 1px solid rgba(251, 244, 234, 0.35); color: #fbf4ea; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 560; }
 .toast-action:hover { background: rgba(251, 244, 234, 0.12); }
 .toast-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, var(--accent-300), var(--accent-500)); animation: toast-progress 3.5s linear forwards; }
 @keyframes toast-progress { from { transform: translateX(-100%); } to { transform: translateX(0%); } }
@@ -354,15 +371,23 @@ input[type='checkbox'] {
   z-index: 40;
 }
 .apk-nav-link {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  min-width: 0;
+  max-width: 100%;
   color: var(--muted);
-  padding: 6px 14px;
+  padding: 6px 8px;
   border-radius: var(--radius-md);
   font-weight: 530;
   transition: color 150ms ease, background-color 150ms ease;
+}
+.apk-nav-link span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .apk-nav-link.active { color: var(--accent-700); background: var(--accent-50); font-weight: 620; }
 

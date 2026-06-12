@@ -70,7 +70,7 @@ export function SavedListManager() {
                     <div className="font-medium truncate">
                       {l.name}
                       {isLoaded && (
-                        <span className="ml-2 text-[11px] px-1.5 py-0.5 rounded bg-emerald-100 border border-emerald-300 text-emerald-900 align-middle">
+                        <span className="badge badge-special ml-2 align-middle">
                           Loaded
                         </span>
                       )}

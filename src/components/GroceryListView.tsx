@@ -130,6 +130,12 @@ export function GroceryListView() {
 
   const onSetCategory = (norm: string, category: string | null) => setItemCategory(norm, category)
 
+  // Virtualized rows have a fixed height sized for single-line cards; on narrow
+  // screens cards wrap to two lines and would clip, so only virtualize on wide
+  // viewports (and never in the TWA, where native scrolling matters).
+  const wideViewport = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+  const allowVirtualize = !apk && wideViewport
+
   const listEmpty = selectedRecipeIds.length === 0 && extras.length === 0
   const anyCategorized = agg.some((i) => i.category)
   const visibleItems = hideChecked ? remaining : agg
@@ -170,7 +176,7 @@ export function GroceryListView() {
                 <span className="font-semibold text-base">{animTotal}</span> remaining
               </div>
             </div>
-            <div className="flex items-center gap-4 ml-auto">
+            <div className="flex items-center gap-x-4 gap-y-1 ml-auto flex-wrap justify-end">
               <label className="inline-flex items-center gap-1.5 text-soft whitespace-nowrap">
                 <input
                   type="checkbox"
@@ -221,7 +227,7 @@ export function GroceryListView() {
             onRemove={onRemove}
             canRemove={canRemove}
             onSetCategory={onSetCategory}
-            allowVirtualize={!apk}
+            allowVirtualize={allowVirtualize}
           />
         )}
 
@@ -237,7 +243,7 @@ export function GroceryListView() {
                 onRemove={onRemove}
                 canRemove={canRemove}
                 onSetCategory={onSetCategory}
-                allowVirtualize={!apk}
+                allowVirtualize={allowVirtualize}
               />
             </div>
           </details>
@@ -448,7 +454,7 @@ function ItemCard({
           {label}
         </span>
       </label>
-      <div className="flex items-center gap-2 ml-auto">
+      <div className="flex items-center gap-2 ml-auto flex-wrap justify-end max-w-full">
         <SourceBadges sources={it.sources} />
         <CategorySelect value={it.category} onChange={(c) => onSetCategory(it.norm, c)} itemName={it.name} />
         {removable && (

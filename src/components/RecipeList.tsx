@@ -81,7 +81,7 @@ export function RecipeList() {
   }
 
   return (
-    <div className="grid md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <section>
         <div className="flex items-center gap-2 mb-3">
           <input
@@ -112,7 +112,7 @@ export function RecipeList() {
                     {r.standard.length} standard • {r.special.length} special
                   </div>
                 </div>
-                <div className="flex gap-2 items-center shrink-0">
+                <div className="flex gap-2 items-center justify-end flex-wrap shrink-0 max-w-[60%]">
                   <label className="inline-flex items-center gap-2 mr-2">
                     <input
                       type="checkbox"
