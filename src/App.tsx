@@ -85,13 +85,24 @@ export function App() {
     <ToastProvider>
       <div className={apk ? 'min-h-screen apk-root' : 'min-h-screen'}>
         <header
-          className={
-            (scrolled ? 'shadow-sm ' : '') +
-            'app-header border-b bg-white/80 backdrop-blur sticky top-0 z-20 hidden md:block'
-          }
+          className={(scrolled ? 'shadow-sm ' : '') + 'app-header border-b sticky top-0 z-20 hidden md:block'}
         >
-          <div className="container py-3 flex items-center gap-4">
-            <Link to="/recipes" className="font-semibold text-lg">
+          <div className="container py-3 flex items-center justify-between gap-4">
+            <Link to="/recipes" className="wordmark">
+              <svg
+                viewBox="0 0 24 24"
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 10h16l-1.2 8a3 3 0 0 1-3 3H8.2a3 3 0 0 1-3-3L4 10Z" />
+                <path d="M9 10l3-5 3 5" />
+                <path d="M10 14v4M14 14v4" />
+              </svg>
               Grocery Helper
             </Link>
             <NavTabs
@@ -107,8 +118,12 @@ export function App() {
         </header>
         <main className={apk ? 'container py-3 has-bottom-nav' : 'container py-4 has-bottom-nav'}>
           {updateAvailable && (
-            <div className="card p-3 mb-3 flex items-center justify-between gap-3" role="status" aria-live="polite">
-              <div className="text-sm">
+            <div
+              className="card p-3 mb-4 flex items-center justify-between gap-3 !border-[var(--accent-200)] !bg-[var(--accent-50)]"
+              role="status"
+              aria-live="polite"
+            >
+              <div className="text-sm text-soft">
                 New version available. Current: {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'}
               </div>
               <div className="flex items-center gap-2">

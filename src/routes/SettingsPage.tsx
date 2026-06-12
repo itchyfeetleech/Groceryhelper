@@ -47,13 +47,13 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Settings</h1>
+      <h1 className="page-title">Settings</h1>
       <div className="text-sm muted">Version: {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'}</div>
       <section className="space-y-2">
         <h2 className="font-medium">Sync</h2>
         {syncEnabled ? (
           <div className="flex flex-col gap-2">
-            <div className="text-sm text-slate-700">
+            <div className="text-sm text-soft">
               {user ? (
                 isAnonymous ? (
                   <>Signed in anonymously. Sign in with Google to keep your data across devices.</>
@@ -80,7 +80,7 @@ export function SettingsPage() {
             </div>
           </div>
         ) : (
-          <div className="text-sm text-slate-500">Sync not configured. Set Vite env vars for Firebase and rebuild.</div>
+          <div className="text-sm muted">Sync not configured. Set Vite env vars for Firebase and rebuild.</div>
         )}
       </section>
       <section className="space-y-2">
@@ -89,10 +89,20 @@ export function SettingsPage() {
           <button className="btn" onClick={doExport}>
             Export JSON
           </button>
-          <input ref={fileRef} type="file" accept="application/json" onChange={onImportFile} aria-label="Import JSON file" />
+          <button className="btn" onClick={() => fileRef.current?.click()}>
+            Import file…
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json"
+            onChange={onImportFile}
+            aria-label="Import JSON file"
+            className="sr-only"
+          />
         </div>
         <textarea
-          className="w-full h-40 border rounded p-2"
+          className="input h-40 font-mono text-xs leading-relaxed"
           value={exportText}
           onChange={(e) => setExportText(e.target.value)}
           aria-label="Backup JSON"

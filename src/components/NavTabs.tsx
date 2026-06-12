@@ -17,10 +17,8 @@ export function NavTabs({
               <Link
                 to={t.to}
                 className={
-                  'inline-flex items-center rounded-lg px-3 py-1.5 text-sm border shadow-sm transition-colors ' +
-                  (active
-                    ? 'tab-active'
-                    : 'tab-idle')
+                  'inline-flex items-center rounded-full px-3.5 py-1.5 text-sm font-medium border transition-colors ' +
+                  (active ? 'tab-active' : 'tab-idle')
                 }
                 aria-current={active ? 'page' : undefined}
               >

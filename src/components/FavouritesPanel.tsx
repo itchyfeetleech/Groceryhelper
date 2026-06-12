@@ -3,6 +3,7 @@ import { useStore } from '../state/store'
 import { normalizeName } from '../utils/normalization'
 import { useToast } from '../ui/Toast'
 import { CategorySelect } from './CategorySelect'
+import { EmptyState } from '../ui/EmptyState'
 
 export function FavouritesPanel() {
   const { favourites, extras, addFavourite, removeFavourite, addExtra, removeExtra, categories, setItemCategory } =
@@ -30,10 +31,9 @@ export function FavouritesPanel() {
   const list = useMemo(() => favourites.filter((f) => f.section === 'standard'), [favourites])
 
   const renderList = () => {
-    if (list.length === 0)
-      return <p className="text-sm text-slate-500">No favourites yet. Add items you buy every week.</p>
+    if (list.length === 0) return <EmptyState>No favourites yet. Add items you buy every week.</EmptyState>
     return (
-      <ul className="divide-y card">
+      <ul className="divide-y divide-[var(--border)] card">
         {list.map((f, i) => {
           const norm = normalizeName(f.name)
           const key = `standard:${norm}`

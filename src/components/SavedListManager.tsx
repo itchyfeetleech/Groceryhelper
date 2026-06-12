@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../state/store'
 import { useToast } from '../ui/Toast'
+import { EmptyState } from '../ui/EmptyState'
 
 export function SavedListManager() {
   const { savedLists, saveCurrentAs, loadSavedList, deleteSavedList, currentListId } = useStore()
@@ -41,15 +42,15 @@ export function SavedListManager() {
         </button>
       </div>
       {loadedList && (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs muted">
           Saving updates &ldquo;{loadedList.name}&rdquo; with the current selection.
         </p>
       )}
 
       {autoList && (
-        <div className="card p-3 text-sm text-slate-600">
-          <div className="font-medium text-slate-800">Progress auto-saved</div>
-          <div className="text-xs text-slate-500 mt-1">
+        <div className="card p-3 text-sm muted">
+          <div className="font-semibold">Progress auto-saved</div>
+          <div className="text-xs muted mt-1">
             Last updated {new Date(autoList.updatedAt).toLocaleString()}. Your current list will resume automatically
             when you return.
           </div>
@@ -58,9 +59,9 @@ export function SavedListManager() {
 
       <div>
         {manualLists.length === 0 ? (
-          <p className="text-sm text-slate-500">No saved lists yet. Save the current list to reuse it later.</p>
+          <EmptyState>No saved lists yet. Save the current list to reuse it later.</EmptyState>
         ) : (
-          <ul className="divide-y card">
+          <ul className="divide-y divide-[var(--border)] card">
             {manualLists.map((l) => {
               const isLoaded = l.id === currentListId
               return (
@@ -74,7 +75,7 @@ export function SavedListManager() {
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-slate-500">{new Date(l.updatedAt).toLocaleString()}</div>
+                    <div className="text-xs muted">{new Date(l.updatedAt).toLocaleString()}</div>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <button

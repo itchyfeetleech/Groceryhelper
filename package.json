@@ -1,6 +1,6 @@
 {
   "name": "groceryhelper",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,6 +14,8 @@
     "prepare": "git config core.hooksPath .husky || true"
   },
   "dependencies": {
+    "@fontsource-variable/fraunces": "^5.2.9",
+    "@fontsource-variable/inter": "^5.2.8",
     "canvas-confetti": "^1.9.3",
     "classnames": "^2.5.1",
     "firebase": "^10.13.1",

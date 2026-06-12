@@ -9,6 +9,7 @@ import { normalizeName } from '../utils/normalization'
 import { useIsApk } from '../utils/apk'
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber'
 import { ProgressRing } from '../ui/ProgressRing'
+import { EmptyState } from '../ui/EmptyState'
 import { useToast } from '../ui/Toast'
 import { haptic } from '../utils/haptics'
 
@@ -160,26 +161,26 @@ export function GroceryListView() {
 
       <section>
         {totalCount > 0 && (
-          <div className="flex items-center justify-between mb-2 text-sm">
-            <div className="flex items-center gap-2 text-slate-600">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3 text-sm">
+            <div className="flex items-center gap-2.5 muted whitespace-nowrap">
               <ProgressRing progress={progress} ariaLabel={`Progress ${Math.round(progress * 100)}%`} />
               <div>
-                <span className="font-medium text-slate-800">{animRemaining}</span>
+                <span className="font-semibold text-base">{animRemaining}</span>
                 {' '}of{' '}
-                <span className="font-medium text-slate-800">{animTotal}</span> remaining
+                <span className="font-semibold text-base">{animTotal}</span> remaining
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <label className="inline-flex items-center gap-2 text-slate-700">
+            <div className="flex items-center gap-4 ml-auto">
+              <label className="inline-flex items-center gap-1.5 text-soft whitespace-nowrap">
                 <input
                   type="checkbox"
                   checked={groupByAisle}
                   onChange={(e) => toggleGroupByAisle(e.target.checked)}
                   aria-label="Group by aisle"
                 />
-                <span>Group by aisle</span>
+                <span>Aisles</span>
               </label>
-              <label className="inline-flex items-center gap-2 text-slate-700">
+              <label className="inline-flex items-center gap-1.5 text-soft whitespace-nowrap">
                 <input
                   type="checkbox"
                   checked={hideChecked}
@@ -192,7 +193,7 @@ export function GroceryListView() {
           </div>
         )}
         {groupByAisle && totalCount > 0 && !anyCategorized && (
-          <p className="text-xs text-slate-500 mb-2">
+          <p className="text-xs muted mb-2">
             Tip: tap the &ldquo;No aisle&rdquo; tag on an item to organize the list by store aisle.
           </p>
         )}
@@ -201,9 +202,7 @@ export function GroceryListView() {
           <GroupedItems
             items={visibleItems}
             emptyText={
-              listEmpty
-                ? 'Nothing here yet. Pick recipes for the week or add items above.'
-                : 'All items are checked off and hidden.'
+              listEmpty ? 'Your list is empty.' : 'All items are checked off and hidden.'
             }
             checkedNames={checkedNames}
             onToggle={onToggle}
@@ -215,9 +214,7 @@ export function GroceryListView() {
           <Items
             items={visibleItems}
             emptyText={
-              listEmpty
-                ? 'Nothing here yet. Pick recipes for the week or add items above.'
-                : 'All items are checked off and hidden.'
+              listEmpty ? 'Your list is empty.' : 'All items are checked off and hidden.'
             }
             checkedNames={checkedNames}
             onToggle={onToggle}
@@ -230,7 +227,7 @@ export function GroceryListView() {
 
         {hideChecked && completed.length > 0 && (
           <details className="mt-3">
-            <summary className="cursor-pointer text-sm text-slate-700">Completed ({completed.length})</summary>
+            <summary className="cursor-pointer text-sm text-soft">Completed ({completed.length})</summary>
             <div className="mt-2">
               <Items
                 items={completed}
@@ -284,14 +281,14 @@ function GroupedItems({
   items: AggregatedUnifiedItem[]
   emptyText: string
 }) {
-  if (items.length === 0) return <p className="text-sm text-slate-500">{emptyText}</p>
+  if (items.length === 0) return <EmptyState>{emptyText}</EmptyState>
   const groups = groupByCategory(items)
   return (
     <div>
       {groups.map((g) => (
-        <section key={g.category ?? '__none'} className="mb-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
-            {g.category ?? 'No aisle'} <span className="font-normal">({g.items.length})</span>
+        <section key={g.category ?? '__none'} className="mb-4">
+          <h3 className="aisle-header">
+            {g.category ?? 'No aisle'} <span className="count">({g.items.length})</span>
           </h3>
           <ul className="space-y-2" aria-label={`${g.category ?? 'No aisle'} items`}>
             {g.items.map((it) => (
@@ -333,7 +330,7 @@ function Items({
     if (items.length > VIRTUALIZE_THRESHOLD) setEverVirtual(true)
   }, [items.length])
 
-  if (items.length === 0) return <p className="text-sm text-slate-500">{emptyText}</p>
+  if (items.length === 0) return <EmptyState>{emptyText}</EmptyState>
 
   // Virtualization is disabled in APK mode so native scrolling works well in the TWA
   if (allowVirtualize && everVirtual) {
@@ -441,13 +438,13 @@ function ItemCard({
     <div
       {...handlers}
       className={
-        'flex items-center justify-between flex-wrap gap-x-3 gap-y-1 card px-3 py-2 transition-shadow ' +
-        (checked ? 'opacity-80' : 'hover:shadow-md')
+        'flex items-center justify-between flex-wrap gap-x-3 gap-y-1 card px-3 py-2 transition-[box-shadow,opacity] duration-200 ' +
+        (checked ? 'opacity-70' : 'hover:shadow-[var(--shadow-card-hover)]')
       }
     >
       <label className="flex items-center gap-2 min-w-0 flex-1 basis-40 cursor-pointer">
         <input type="checkbox" checked={checked} onChange={() => onToggle(it.norm)} aria-label={`Check ${it.name}`} />
-        <span className={checked ? 'line-through text-slate-500 truncate' : 'truncate'} title={label}>
+        <span className={checked ? 'line-through muted truncate' : 'truncate'} title={label}>
           {label}
         </span>
       </label>
@@ -483,37 +480,22 @@ function ItemCard({
 }
 
 function SourceBadges({ sources }: { sources: AggregatedUnifiedItem['sources'] }) {
+  // The "Standard" source is the default for nearly every item, so it is not
+  // shown as a badge; Special, Favourite, and recipe origins carry the signal.
   const shown = sources.recipeNames.slice(0, 2)
   const hidden = sources.recipeNames.length - shown.length
   return (
     <div className="flex flex-wrap gap-1 justify-end">
-      {sources.standard && (
-        <span className="text-[12px] px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-800">
-          Standard
-        </span>
-      )}
-      {sources.special && (
-        <span className="text-[12px] px-1.5 py-0.5 rounded bg-amber-100 border border-amber-300 text-amber-900">
-          Special
-        </span>
-      )}
-      {sources.fromFavourite && (
-        <span className="text-[12px] px-1.5 py-0.5 rounded bg-emerald-100 border border-emerald-300 text-emerald-900">
-          Favourite
-        </span>
-      )}
+      {sources.special && <span className="badge badge-special">Special</span>}
+      {sources.fromFavourite && <span className="badge badge-fav">Favourite</span>}
       {shown.map((n) => (
-        <span
-          key={n}
-          className="text-[12px] px-1.5 py-0.5 rounded bg-blue-100 border border-blue-300 text-blue-900"
-          title={`From recipe: ${n}`}
-        >
+        <span key={n} className="badge badge-recipe" title={`From recipe: ${n}`}>
           {n}
         </span>
       ))}
       {hidden > 0 && (
         <span
-          className="text-[12px] px-1.5 py-0.5 rounded bg-blue-50 border border-blue-300 text-blue-900"
+          className="badge badge-recipe"
           title={sources.recipeNames.join(', ')}
           aria-label={`From recipes: ${sources.recipeNames.join(', ')}`}
         >
