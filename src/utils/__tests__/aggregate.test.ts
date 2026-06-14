@@ -38,11 +38,14 @@ test('Extras aggregate', () => {
 test('Unified aggregation attaches categories by normalized name', () => {
   const A = makeRecipe('A', 'A', ['Flour'], [])
   const extras: ExtraItem[] = [{ name: 'milk', section: 'standard' }]
-  const items = aggregateUnified([A], ['A'], extras, { flour: 'Pantry', milk: 'Dairy & Eggs' })
-  expect(items.find((i) => i.norm === 'flour')?.category).toBe('Pantry')
-  expect(items.find((i) => i.norm === 'milk')?.category).toBe('Dairy & Eggs')
-  const without = aggregateUnified([A], ['A'], extras)
-  expect(without.find((i) => i.norm === 'flour')?.category).toBeUndefined()
+  const items = aggregateUnified([A], ['A'], extras, { flour: 'Snacks', milk: 'Drinks' })
+  // manual assignments override the automatic database
+  expect(items.find((i) => i.norm === 'flour')?.category).toBe('Snacks')
+  expect(items.find((i) => i.norm === 'milk')?.category).toBe('Drinks')
+  // without manual assignments, the built-in database fills them in
+  const auto = aggregateUnified([A], ['A'], extras)
+  expect(auto.find((i) => i.norm === 'flour')?.category).toBe('Pantry')
+  expect(auto.find((i) => i.norm === 'milk')?.category).toBe('Dairy & Eggs')
 })
 
 test('Saved list recompute scenario', () => {

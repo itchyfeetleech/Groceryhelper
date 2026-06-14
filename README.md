@@ -11,7 +11,7 @@ Store recipes and generate aggregated grocery lists. 100% static web app (React 
 - Favourites: save frequently bought items and toggle them into the current week’s list with one tap.
 - Saved lists: save/load/delete named lists that store recipeIds, extras, and checked items. Recompute from latest recipes on load.
 - Check off items inline; clear checks; swipe gestures on touch (right to check, left to remove extras).
-- Aisle categories: assign items to store aisles (Produce, Dairy & Eggs, ...) and group the grocery list in walking order ("Group by aisle" toggle). Assignments are remembered per item name and sync/export with the rest of the data.
+- Aisle categories: items are matched to store aisles (Produce, Dairy & Eggs, ...) automatically from a built-in ingredient database; the grocery list groups in walking order ("Aisles" toggle). Tap the aisle tag on any item to correct it - manual assignments override the database, are remembered per item name, and sync/export with the rest of the data.
 - Virtualized list for large lists (120+ items) using react-window for smooth scrolling.
 - Optional cloud sync via Firebase (anonymous sign-in + Google sign-in), with offline persistence and conflict resolution by timestamp.
 - Import/Export JSON backup in Settings (import asks for confirmation before replacing data).
