@@ -6,6 +6,7 @@ import { App } from './App'
 import { RecipesPage } from './routes/RecipesPage'
 import { GroceriesPage } from './routes/GroceriesPage'
 import { SettingsPage } from './routes/SettingsPage'
+import { SavedListsPage } from './routes/SavedListsPage'
 import { ItemsPage } from './routes/ItemsPage'
 import { detectApkAndPersist } from './utils/apk'
 
@@ -21,6 +22,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="recipes" element={<RecipesPage />} />
           <Route path="items" element={<ItemsPage />} />
           <Route path="groceries" element={<GroceriesPage />} />
+          <Route path="saved-lists" element={<SavedListsPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/recipes" replace />} />

@@ -1,7 +1,7 @@
+import { PageHeading } from '../ui/PageHeading'
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { GroceryListView } from '../components/GroceryListView'
-import { SavedListManager } from '../components/SavedListManager'
 import { useStore } from '../state/store'
 import { useIsApk } from '../utils/apk'
 
@@ -32,7 +32,7 @@ export function GroceriesPage() {
   }, [apk])
   return (
     <div className="space-y-6">
-      <h1 className="page-title">Grocery list</h1>
+      <PageHeading>Grocery list</PageHeading>
       {selectedRecipeIds.length === 0 && (
         <div className="card p-3 text-sm text-soft">
           No recipes selected for this week.{' '}
@@ -43,7 +43,6 @@ export function GroceriesPage() {
         </div>
       )}
       <GroceryListView />
-      <SavedListManager />
     </div>
   )
 }

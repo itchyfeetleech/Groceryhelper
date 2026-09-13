@@ -110,7 +110,7 @@ export function App() {
                 { to: '/recipes', label: 'Recipes' },
                 { to: '/items', label: 'Items' },
                 { to: '/groceries', label: 'Grocery list' },
-                { to: '/settings', label: 'Settings' },
+                { to: '/saved-lists', label: 'Saved lists' },
               ]}
               activePath={location.pathname}
             />

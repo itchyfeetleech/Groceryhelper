@@ -5,7 +5,7 @@ export function BottomNav({ activePath }: { activePath: string }) {
     { to: '/recipes', label: 'Recipes', icon: FireBookIcon },
     { to: '/items', label: 'Items', icon: BasketIcon },
     { to: '/groceries', label: 'Groceries', icon: ChecklistIcon },
-    { to: '/settings', label: 'Settings', icon: GearIcon },
+    { to: '/saved-lists', label: 'Saved lists', icon: SavedListsIcon },
   ]
   return (
     <nav className="apk-bottom-nav" aria-label="Primary">
@@ -58,13 +58,18 @@ function ChecklistIcon({ className = '' }) {
     </>
   ) })
 }
-function GearIcon({ className = '' }) {
+export function GearIcon({ className = '' }) {
   return svg({ className, children: (
     <>
-      <path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/>
-      <path d="M4.9 8.6l-1.4-2.4 2.1-2.1 2.4 1.4M19.1 8.6l1.4-2.4-2.1-2.1-2.4 1.4"/>
-      <path d="M19.1 15.4l1.4 2.4-2.1 2.1-2.4-1.4M4.9 15.4l-1.4 2.4 2.1 2.1 2.4-1.4"/>
+      <path d="M9.5 3h5l.5 2.5 1.5.9 2.4-.8 2.5 4.3-1.9 1.7v1.8l1.9 1.7-2.5 4.3-2.4-.8-1.5.9-.5 2.5h-5L9 19.5l-1.5-.9-2.4.8-2.5-4.3 1.9-1.7v-1.8L2.6 9.9l2.5-4.3 2.4.8L9 5.5 9.5 3Z" />
+      <circle cx="12" cy="12.5" r="3" />
     </>
   ) })
 }
 
+function SavedListsIcon({ className = '' }) {
+  return svg({ className, children: <>
+    <path d="M6 3h12v18l-6-4-6 4V3Z" />
+    <path d="M9 7h6M9 11h6" />
+  </> })
+}

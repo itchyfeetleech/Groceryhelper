@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { syncEnabled, useSyncUser, signOutSync, signInWithGoogle } from '../sync'
 import { useStore } from '../state/store'
 import { useToast } from '../ui/Toast'
 
 export function SettingsPage() {
-  const { exportJSON, importJSON } = useStore()
+  const { exportJSON, importJSON, hideChecked, groupByAisle, setDisplaySetting } = useStore()
   const { show } = useToast()
   const [exportText, setExportText] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
@@ -47,7 +48,19 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-4">
+      <Link to="/groceries" className="text-sm text-soft underline underline-offset-2">Grocery list</Link>
       <h1 className="page-title">Settings</h1>
+      <section className="space-y-3">
+        <h2 className="font-medium">Grocery list</h2>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={groupByAisle} onChange={(e) => setDisplaySetting('groupByAisle', e.target.checked)} />
+          <span>Show aisles</span>
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={hideChecked} onChange={(e) => setDisplaySetting('hideChecked', e.target.checked)} />
+          <span>Hide checked</span>
+        </label>
+      </section>
       <div className="text-sm muted">Version: {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'}</div>
       <section className="space-y-2">
         <h2 className="font-medium">Sync</h2>

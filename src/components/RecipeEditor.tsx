@@ -5,12 +5,12 @@ import { IngredientChips } from './IngredientChips'
 
 type Props = {
   value: Recipe
-  onChange: (r: Recipe) => void
-  onSave: () => void
-  duplicateTitle?: boolean
+  onSave: (r: Recipe) => void
+  onDelete?: () => void
+  otherTitles: string[]
 }
 
-export function RecipeEditor({ value, onChange, onSave, duplicateTitle }: Props) {
+export function RecipeEditor({ value, onSave, onDelete, otherTitles }: Props) {
   const [title, setTitle] = useState(value.title)
   const [standard, setStandard] = useState<string[]>(value.standard)
   const [special, setSpecial] = useState<string[]>(value.special)
@@ -30,9 +30,7 @@ export function RecipeEditor({ value, onChange, onSave, duplicateTitle }: Props)
     if (!value.title) titleInput.current?.focus()
   }, [value.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    onChange({ ...value, title, standard, special })
-  }, [title, standard, special]) // eslint-disable-line react-hooks/exhaustive-deps
+  const duplicateTitle = otherTitles.some((other) => other.trim().toLowerCase() === title.trim().toLowerCase())
 
   const addIngredient = (section: 'standard' | 'special') => {
     const input = section === 'standard' ? stdInput.current : spcInput.current
@@ -53,21 +51,10 @@ export function RecipeEditor({ value, onChange, onSave, duplicateTitle }: Props)
     if (section === 'standard') setStandard(standard.filter((_, i) => i !== index))
     else setSpecial(special.filter((_, i) => i !== index))
   }
-  const move = (section: 'standard' | 'special', index: number, delta: -1 | 1) => {
-    const arr = section === 'standard' ? [...standard] : [...special]
-    const target = index + delta
-    const a = arr[index]
-    const b = arr[target]
-    if (a === undefined || b === undefined) return
-    arr[index] = b
-    arr[target] = a
-    if (section === 'standard') setStandard(arr)
-    else setSpecial(arr)
-  }
-
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSave()
+    if (!title.trim()) return
+    onSave({ ...value, title: title.trim(), standard, special })
   }
 
   const dupWithin = useMemo(() => {
@@ -99,7 +86,7 @@ export function RecipeEditor({ value, onChange, onSave, duplicateTitle }: Props)
       </div>
 
       <fieldset>
-        <legend className="font-medium">Standard ingredients</legend>
+        <legend className="font-medium">Staple ingredients</legend>
         <div className="flex gap-2 mt-1">
           <input
             ref={stdInput}
@@ -112,7 +99,7 @@ export function RecipeEditor({ value, onChange, onSave, duplicateTitle }: Props)
                 addIngredient('standard')
               }
             }}
-            aria-label="Add standard ingredient"
+            aria-label="Add staple ingredient"
           />
           <button type="button" className="btn-primary" onClick={() => addIngredient('standard')}>
             Add
@@ -122,8 +109,6 @@ export function RecipeEditor({ value, onChange, onSave, duplicateTitle }: Props)
           <IngredientChips
             items={standard}
             onDelete={(i) => removeAt('standard', i)}
-            onMoveUp={(i) => move('standard', i, -1)}
-            onMoveDown={(i) => move('standard', i, 1)}
           />
         </div>
       </fieldset>
@@ -152,8 +137,6 @@ export function RecipeEditor({ value, onChange, onSave, duplicateTitle }: Props)
           <IngredientChips
             items={special}
             onDelete={(i) => removeAt('special', i)}
-            onMoveUp={(i) => move('special', i, -1)}
-            onMoveDown={(i) => move('special', i, 1)}
           />
         </div>
       </fieldset>
@@ -165,11 +148,11 @@ export function RecipeEditor({ value, onChange, onSave, duplicateTitle }: Props)
         )}
       </div>
 
-      <div className="flex gap-2 items-center">
-        <button type="submit" className="btn-primary">
-          Done
+      <div className="flex gap-2 items-center justify-between flex-wrap">
+        {onDelete && <button type="button" className="btn btn-icon-danger" onClick={onDelete}>Delete recipe</button>}
+        <button type="submit" className="btn-primary ml-auto">
+          Save
         </button>
-        <span className="text-xs muted">Changes are saved as you type.</span>
       </div>
     </form>
   )

@@ -7,7 +7,14 @@ import { uid } from '../utils/id'
 
 export const AUTO_LIST_ID = 'auto-list'
 
+function readDisplaySetting(key: string, fallback: boolean) {
+  try { const value = localStorage.getItem(key); return value === null ? fallback : value === '1' } catch { return fallback }
+}
+
 type StoreState = {
+  hideChecked: boolean
+  groupByAisle: boolean
+  setDisplaySetting: (key: 'hideChecked' | 'groupByAisle', value: boolean) => void
   recipes: Recipe[]
   savedLists: SavedList[]
   favourites: ExtraItem[]
@@ -163,6 +170,12 @@ export const useStore = create<StoreState>((set, get) => {
   }
 
   return {
+    hideChecked: readDisplaySetting('hideChecked', false),
+    groupByAisle: readDisplaySetting('groupByAisle', true),
+    setDisplaySetting: (key, value) => {
+      set({ [key]: value })
+      try { localStorage.setItem(key, value ? '1' : '0') } catch {}
+    },
     recipes: persisted.recipes,
     savedLists: prepared.savedLists,
     favourites: (persisted.favourites ?? []).map((f) => ({ name: f.name, section: 'standard' as const })),
