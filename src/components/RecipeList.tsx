@@ -1,13 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../state/store'
 import type { Recipe } from '../types'
 import { RecipeEditor } from './RecipeEditor'
 import { EmptyState } from '../ui/EmptyState'
-
-function isEmptyDraft(r: Recipe | undefined): boolean {
-  return !!r && !r.title.trim() && r.standard.length === 0 && r.special.length === 0
-}
+import { PageHeading } from '../ui/PageHeading'
 
 export function RecipeList() {
   const { recipes, addRecipe, updateRecipe, deleteRecipe, selectedRecipeIds, setSelectedRecipeIds } = useStore()
@@ -17,7 +14,6 @@ export function RecipeList() {
   const [searchParams, setSearchParams] = useSearchParams()
   const editingId = searchParams.get('edit')
   const navigate = useNavigate()
-  const editorRef = useRef<HTMLDivElement>(null)
 
   const filtered = useMemo(() => {
     const nq = q.trim().toLowerCase()
@@ -31,46 +27,14 @@ export function RecipeList() {
   }
 
   const startNew = () => {
-    const id = addRecipe({ title: '', standard: [], special: [] })
-    openEditor(id)
+    setSearchParams({ edit: 'new' })
   }
 
-  const editing = recipes.find((r) => r.id === editingId) || null
-
-  // Discard drafts that were never filled in, whenever the editor closes or
-  // switches away from them (Done button, back button, or edit of another recipe).
-  const prevEditingIdRef = useRef<string | null>(editingId)
-  useEffect(() => {
-    const prevId = prevEditingIdRef.current
-    prevEditingIdRef.current = editingId
-    if (prevId && prevId !== editingId) {
-      const prev = useStore.getState().recipes.find((r) => r.id === prevId)
-      if (isEmptyDraft(prev)) deleteRecipe(prevId)
-    }
-  }, [editingId, deleteRecipe])
-  // Also clean up when leaving the page entirely (e.g. bottom-nav to another tab)
-  useEffect(() => {
-    return () => {
-      const id = prevEditingIdRef.current
-      if (!id) return
-      const r = useStore.getState().recipes.find((x) => x.id === id)
-      if (isEmptyDraft(r)) useStore.getState().deleteRecipe(id)
-    }
-  }, [])
-
-  // On small screens the editor renders below the list; bring it into view
-  useEffect(() => {
-    if (editingId && window.innerWidth < 768) {
-      editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }, [editingId])
-
-  const duplicateTitle = useMemo(() => {
-    if (!editing) return false
-    const norm = editing.title.trim().toLowerCase()
-    if (!norm) return false
-    return recipes.some((r) => r.id !== editing.id && r.title.trim().toLowerCase() === norm)
-  }, [recipes, editing])
+  const newDraft = useMemo<Recipe>(() => ({
+    id: 'new', title: '', standard: [], special: [],
+    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+  }), [])
+  const editing = editingId === 'new' ? newDraft : recipes.find((r) => r.id === editingId) || null
 
   const closeEditor = () => {
     // Prefer going back so the history entry created by opening is consumed;
@@ -80,8 +44,42 @@ export function RecipeList() {
     else setSearchParams({}, { replace: true })
   }
 
+  if (editing) {
+    const heading = editingId === 'new' ? 'New recipe' : 'Edit recipe'
+    return (
+      <div className="space-y-4">
+        <button className="inline-flex items-center gap-2 text-sm text-soft" onClick={closeEditor}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5m7-7-7 7 7 7" />
+          </svg>
+          Back
+        </button>
+        <h1 className="page-title">{heading}</h1>
+        <div className="card p-4">
+          <RecipeEditor
+            key={editing.id}
+            value={editing}
+            onSave={(recipe) => {
+              if (editingId === 'new') addRecipe({ title: recipe.title, standard: recipe.standard, special: recipe.special })
+              else updateRecipe(recipe)
+              closeEditor()
+            }}
+            onDelete={editingId === 'new' ? undefined : () => {
+              if (confirm(`Delete "${editing.title || 'this recipe'}"?`)) {
+                deleteRecipe(editing.id)
+                setSearchParams({}, { replace: true })
+              }
+            }}
+            otherTitles={recipes.filter((r) => r.id !== editing.id).map((r) => r.title)}
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="space-y-4">
+      <PageHeading>Recipes</PageHeading>
       <section>
         <div className="flex items-center gap-2 mb-3">
           <input
@@ -108,9 +106,6 @@ export function RecipeList() {
                   <div className="font-medium truncate">
                     {r.title || <span className="muted">(Untitled)</span>}
                   </div>
-                  <div className="text-xs muted">
-                    {r.standard.length} standard • {r.special.length} special
-                  </div>
                 </div>
                 <div className="flex gap-2 items-center justify-end flex-wrap shrink-0 max-w-[60%]">
                   <label className="inline-flex items-center gap-2 mr-2">
@@ -126,7 +121,6 @@ export function RecipeList() {
                       }}
                       aria-label={`Select recipe ${r.title || 'untitled'} for this week`}
                     />
-                    <span className="text-xs">This week</span>
                   </label>
                   <button
                     className="btn-icon"
@@ -149,51 +143,10 @@ export function RecipeList() {
                     </svg>
                     <span className="sr-only">Edit</span>
                   </button>
-                  <button
-                    className="btn-icon btn-icon-danger"
-                    onClick={() => {
-                      if (confirm(`Delete "${r.title || 'this recipe'}"?`)) {
-                        if (editingId === r.id) setSearchParams({}, { replace: true })
-                        deleteRecipe(r.id)
-                      }
-                    }}
-                    title="Delete recipe"
-                    aria-label={`Delete ${r.title || 'recipe'}`}
-                  >
-                    <svg
-                      aria-hidden="true"
-                      viewBox="0 0 24 24"
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M6 7h12M9 7l1-2h4l1 2M8 7v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7" />
-                      <path d="M10 11v6M14 11v6" />
-                    </svg>
-                    <span className="sr-only">Delete</span>
-                  </button>
                 </div>
               </li>
             ))}
           </ul>
-        )}
-      </section>
-      <section ref={editorRef} aria-live="polite">
-        {editing ? (
-          <div className="card p-4">
-            <h2 className="font-medium mb-3">{editing.title ? 'Edit recipe' : 'New recipe'}</h2>
-            <RecipeEditor
-              value={editing}
-              onChange={(r) => updateRecipe(r)}
-              onSave={closeEditor}
-              duplicateTitle={duplicateTitle}
-            />
-          </div>
-        ) : (
-          <div className="text-sm muted">Select a recipe to edit, or create a new one.</div>
         )}
       </section>
     </div>

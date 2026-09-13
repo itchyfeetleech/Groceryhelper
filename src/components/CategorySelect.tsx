@@ -11,6 +11,8 @@ type Props = {
 export function CategorySelect({ value, onChange, itemName }: Props) {
   const selected = isKnownCategory(value) ? value : ''
   return (
+    <span className="category-select-wrap">
+      <span className="category-select-size" aria-hidden="true">{selected || 'No aisle'}</span>
     <select
       className={selected ? 'category-select category-select-set' : 'category-select'}
       value={selected}
@@ -25,5 +27,6 @@ export function CategorySelect({ value, onChange, itemName }: Props) {
         </option>
       ))}
     </select>
+    </span>
   )
 }

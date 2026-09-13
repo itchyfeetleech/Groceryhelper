@@ -4,6 +4,7 @@ import { normalizeName } from '../utils/normalization'
 import { useToast } from '../ui/Toast'
 import { CategorySelect } from './CategorySelect'
 import { autoAisle, NO_AISLE, resolveAisle } from '../utils/aisleDb'
+import { groupByCategory } from '../utils/categories'
 import { EmptyState } from '../ui/EmptyState'
 
 export function FavouritesPanel() {
@@ -29,7 +30,11 @@ export function FavouritesPanel() {
     setFavName('')
   }
 
-  const list = useMemo(() => favourites.filter((f) => f.section === 'standard'), [favourites])
+  const list = useMemo(() => groupByCategory(
+    favourites.filter((f) => f.section === 'standard').map((f) => ({
+      ...f, category: resolveAisle(normalizeName(f.name), categories),
+    })),
+  ).flatMap((group) => group.items), [favourites, categories])
 
   const renderList = () => {
     if (list.length === 0) return <EmptyState>No favourites yet. Add items you buy every week.</EmptyState>
@@ -40,7 +45,7 @@ export function FavouritesPanel() {
           const key = `standard:${norm}`
           const alreadyAdded = extrasSet.has(key)
           return (
-            <li key={key + ':' + i} className="p-2 flex items-center justify-between gap-2">
+            <li key={key + ':' + i} className="p-3 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span className="truncate">{f.name}</span>
               </div>
@@ -53,7 +58,7 @@ export function FavouritesPanel() {
                   }}
                   itemName={f.name}
                 />
-                <label className="inline-flex items-center gap-2">
+                <label className="inline-flex items-center gap-2 mr-2">
                   <input
                     type="checkbox"
                     checked={alreadyAdded}
@@ -63,7 +68,6 @@ export function FavouritesPanel() {
                     }}
                     aria-label={`Include favourite ${f.name} this week`}
                   />
-                  <span className="text-xs">This week</span>
                 </label>
                 <button className="btn-icon btn-icon-danger" onClick={() => removeFavourite(norm, 'standard')} aria-label={`Remove favourite ${f.name}`} title="Remove favourite">
                   <svg aria-hidden="true" viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -81,8 +85,7 @@ export function FavouritesPanel() {
   }
 
   return (
-    <div className="mt-6">
-      <h2 className="font-medium mb-2">Favourites</h2>
+    <div>
       <div className="flex gap-2">
         <input
           value={favName}
@@ -99,11 +102,10 @@ export function FavouritesPanel() {
           enterKeyHint="done"
         />
         <button className="btn-primary" onClick={addFav} disabled={!favName.trim()}>
-          Add Favourite
+          Add
         </button>
       </div>
       <div className="mt-3">
-        <h3 className="font-medium mb-1">Saved favourites</h3>
         {renderList()}
       </div>
     </div>

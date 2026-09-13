@@ -16,12 +16,13 @@ import { haptic } from '../utils/haptics'
 
 const VIRTUALIZE_THRESHOLD = 120
 const VIRTUAL_ROW_HEIGHT = 68
-const GROUP_BY_AISLE_KEY = 'groupByAisle'
 
 export function GroceryListView() {
   const apk = useIsApk()
   const {
     recipes,
+    hideChecked,
+    groupByAisle,
     selectedRecipeIds,
     extras,
     checkedNames,
@@ -41,20 +42,7 @@ export function GroceryListView() {
     [recipes, selectedRecipeIds, extras, categories],
   )
   const [extraName, setExtraName] = useState('')
-  const [hideChecked, setHideChecked] = useState(false)
-  const [groupByAisle, setGroupByAisle] = useState(() => {
-    try {
-      return localStorage.getItem(GROUP_BY_AISLE_KEY) !== '0'
-    } catch {
-      return true
-    }
-  })
-  const toggleGroupByAisle = (on: boolean) => {
-    setGroupByAisle(on)
-    try {
-      localStorage.setItem(GROUP_BY_AISLE_KEY, on ? '1' : '0')
-    } catch {}
-  }
+  const [staplesOnly, setStaplesOnly] = useState(false)
 
   const addExtraItem = () => {
     const norm = normalizeName(extraName)
@@ -89,7 +77,6 @@ export function GroceryListView() {
 
   const checkedSet = new Set(checkedNames)
   const remaining = agg.filter((i) => !checkedSet.has(i.norm))
-  const completed = agg.filter((i) => checkedSet.has(i.norm))
   const totalCount = agg.length
   const remainingCount = remaining.length
   const animRemaining = useAnimatedNumber(remainingCount)
@@ -144,12 +131,16 @@ export function GroceryListView() {
 
   const listEmpty = selectedRecipeIds.length === 0 && extras.length === 0
   const anyCategorized = agg.some((i) => i.category)
-  const visibleItems = hideChecked ? remaining : agg
+  const filteredItems = staplesOnly ? agg.filter((item) => item.sources.standard) : agg
+  const visibleItems = hideChecked ? filteredItems.filter((item) => !checkedSet.has(item.norm)) : filteredItems
+  const filteredCompleted = filteredItems.filter((item) => checkedSet.has(item.norm))
+  const emptyText = agg.length === 0 ? 'Your list is empty.'
+    : filteredItems.length === 0 ? 'No staple items in your list.'
+    : 'All items are checked off and hidden.'
 
   return (
     <div className="space-y-4">
       <section>
-        <h2 className="font-medium mb-2">Add individual item</h2>
         <div className="flex gap-2">
           <input
             value={extraName}
@@ -162,7 +153,7 @@ export function GroceryListView() {
             }}
             className="flex-1 input"
             placeholder="e.g. Milk"
-            aria-label="Add individual item"
+            aria-label="Add item"
             enterKeyHint="done"
           />
           <button className="btn-primary" onClick={addExtraItem} disabled={!extraName.trim()}>
@@ -184,22 +175,8 @@ export function GroceryListView() {
             </div>
             <div className="flex items-center gap-x-4 gap-y-1 ml-auto flex-wrap justify-end">
               <label className="inline-flex items-center gap-1.5 text-soft whitespace-nowrap">
-                <input
-                  type="checkbox"
-                  checked={groupByAisle}
-                  onChange={(e) => toggleGroupByAisle(e.target.checked)}
-                  aria-label="Group by aisle"
-                />
-                <span>Aisles</span>
-              </label>
-              <label className="inline-flex items-center gap-1.5 text-soft whitespace-nowrap">
-                <input
-                  type="checkbox"
-                  checked={hideChecked}
-                  onChange={(e) => setHideChecked(e.target.checked)}
-                  aria-label="Hide checked items"
-                />
-                <span>Hide checked</span>
+                <input type="checkbox" checked={staplesOnly} onChange={(e) => setStaplesOnly(e.target.checked)} aria-label="Show only staple items" />
+                <span>Staple ingredients</span>
               </label>
             </div>
           </div>
@@ -207,9 +184,7 @@ export function GroceryListView() {
         {groupByAisle && anyCategorized ? (
           <GroupedItems
             items={visibleItems}
-            emptyText={
-              listEmpty ? 'Your list is empty.' : 'All items are checked off and hidden.'
-            }
+            emptyText={emptyText}
             checkedNames={checkedNames}
             onToggle={onToggle}
             onRemove={onRemove}
@@ -219,9 +194,7 @@ export function GroceryListView() {
         ) : (
           <Items
             items={visibleItems}
-            emptyText={
-              listEmpty ? 'Your list is empty.' : 'All items are checked off and hidden.'
-            }
+            emptyText={emptyText}
             checkedNames={checkedNames}
             onToggle={onToggle}
             onRemove={onRemove}
@@ -231,12 +204,12 @@ export function GroceryListView() {
           />
         )}
 
-        {hideChecked && completed.length > 0 && (
+        {hideChecked && filteredCompleted.length > 0 && (
           <details className="mt-3">
-            <summary className="cursor-pointer text-sm text-soft">Completed ({completed.length})</summary>
+            <summary className="cursor-pointer text-sm text-soft">Completed ({filteredCompleted.length})</summary>
             <div className="mt-2">
               <Items
-                items={completed}
+                items={filteredCompleted}
                 emptyText=""
                 checkedNames={checkedNames}
                 onToggle={onToggle}
@@ -296,10 +269,11 @@ function GroupedItems({
           <h3 className="aisle-header">
             {g.category ?? 'No aisle'} <span className="count">({g.items.length})</span>
           </h3>
-          <ul className="space-y-2" aria-label={`${g.category ?? 'No aisle'} items`}>
+          <ul className="card !rounded-[8px] divide-y divide-[var(--border)]" aria-label={`${g.category ?? 'No aisle'} items`}>
             {g.items.map((it) => (
               <li key={it.norm}>
                 <ItemCard
+                  grouped
                   item={it}
                   checked={callbacks.checkedNames.includes(it.norm)}
                   onToggle={callbacks.onToggle}
@@ -415,6 +389,7 @@ function VirtualizedItems({ items, ...callbacks }: ItemCallbacks & { items: Aggr
 }
 
 function ItemCard({
+  grouped = false,
   item: it,
   checked,
   onToggle,
@@ -422,6 +397,7 @@ function ItemCard({
   removable,
   onSetCategory,
 }: {
+  grouped?: boolean
   item: AggregatedUnifiedItem
   checked: boolean
   onToggle: (norm: string) => void
@@ -444,8 +420,9 @@ function ItemCard({
     <div
       {...handlers}
       className={
-        'flex items-center justify-between flex-wrap gap-x-3 gap-y-1 card px-3 py-2 transition-[box-shadow,opacity] duration-200 ' +
-        (checked ? 'opacity-70' : 'hover:shadow-[var(--shadow-card-hover)]')
+        'flex items-center justify-between flex-wrap gap-x-3 gap-y-1 transition-[box-shadow,opacity] duration-200 ' +
+        (grouped ? 'p-3 ' : 'card px-3 py-2 ') +
+        (checked ? 'opacity-70' : grouped ? '' : 'hover:shadow-[var(--shadow-card-hover)]')
       }
     >
       <label className="flex items-center gap-2 min-w-0 flex-1 basis-40 cursor-pointer">
@@ -486,13 +463,11 @@ function ItemCard({
 }
 
 function SourceBadges({ sources }: { sources: AggregatedUnifiedItem['sources'] }) {
-  // The "Standard" source is the default for nearly every item, so it is not
-  // shown as a badge; Special, Favourite, and recipe origins carry the signal.
   const shown = sources.recipeNames.slice(0, 2)
   const hidden = sources.recipeNames.length - shown.length
   return (
     <div className="flex flex-wrap gap-1 justify-end">
-      {sources.special && <span className="badge badge-special">Special</span>}
+      {sources.standard && <span className="badge badge-special">Staple</span>}
       {sources.fromFavourite && <span className="badge badge-fav">Favourite</span>}
       {shown.map((n) => (
         <span key={n} className="badge badge-recipe" title={`From recipe: ${n}`}>

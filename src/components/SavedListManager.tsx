@@ -21,7 +21,6 @@ export function SavedListManager() {
 
   return (
     <div className="space-y-3">
-      <h2 className="font-medium">Saved lists</h2>
       <div className="flex gap-2">
         <input
           value={name}
